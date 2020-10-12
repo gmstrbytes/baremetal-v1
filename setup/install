@@ -1,0 +1,113 @@
+#!/bin/bash
+
+# Make sure the shell is bash.
+if [ x$BASH_VERSION = x ]; then exec /bin/bash $0; fi
+
+# Make sure we're not running as root
+if [ $(whoami) = root ]; then echo "Please don't run as root"; exit 1; fi
+
+web=https://github.com/Spivoxity/geany-mods/releases/download/v0.2
+arch=$(dpkg --print-architecture)
+gver=spivoxity2
+pkgs="geany-common_1.33-1-${gver}_all.deb geany_1.33-1-${gver}_$arch.deb"
+dir=$(dirname $0)
+
+cd $dir
+
+case $arch in
+    amd64|armhf)
+        echo "Installing for $arch ..."; echo;;
+    *)
+        echo "Can't install for $arch"
+        exit 1
+esac
+
+echo "*** Installing packages"
+sudo apt-get -y install \
+     gcc-arm-none-eabi gdb-arm-none-eabi \
+     pulseview sigrok-firmware-fx2lafw \
+     geany geany-plugin-projectorganizer \
+     minicom openocd python3
+echo
+
+# echo "*** Installing pyocd"
+# sudo apt-get -y install python3-pip
+# # carefully avoiding the Rust backend cmsis-pack-manager ...
+# sudo apt-get -y install python3-colorama python3-intelhex \
+#      python3-intervaltree python3-prettytable python3-pyelftools \
+#      python3-usb python3-six python3-future
+# sudo pip3 install pylink-square pyyaml
+# sudo pip3 install --no-deps pyocd
+# echo
+
+vers=$(dpkg-query -W -f '${Version}\n' geany)
+regexp="-$gver\$"
+if [[ $vers =~ $regexp ]]; then
+    echo "*** Geany is already at version $vers"
+else
+    echo "*** Installing enhanced version of geany"
+    for f in $pkgs; do
+        if ! wget $web/$f -O $f; then
+            echo "Couldn't download $f"; exit 1
+        fi
+    done
+    sudo dpkg -i $pkgs
+fi
+echo
+
+echo "*** Associating project files with Geany"
+mkdir -p $HOME/.local/share/applications $HOME/.local/share/mime/packages
+cp application-x-geany-project.xml $HOME/.local/share/mime/packages
+cp geany.desktop $HOME/.local/share/applications
+update-mime-database $HOME/.local/share/mime
+update-desktop-database $HOME/.local/share/applications
+echo
+
+set-option () {
+    # Like crudini --set, but without the syntax error in new options
+    # or troubles with trailing whitespace
+    python3 houdini.py set $1 $2 $3 $4
+}
+
+echo "*** Making personalised settings for Geany"
+mkdir -p $HOME/.config/geany/filedefs
+geanyexts=$HOME/.config/geany/filetype_extensions.conf 
+set-option $geanyexts Extensions GnuAs ''
+set-option $geaynexts Extensions GnuARM '*.s;*.S;'
+cp filetypes.GnuARM.conf $HOME/.config/geany/filedefs
+echo
+
+echo "*** Setting preferences for Geany"
+geanyconf=$HOME/.config/geany/geany.conf
+
+# Geany: Disable 'Load files from last session'
+set-option $geanyconf geany pref_main_load_session false
+
+# Geany: Enable Project Organizer
+libdir=$(dpkg-architecture -q DEB_HOST_GNU_TYPE)
+set-option $geanyconf plugins load_plugins true
+plugins=$(python3 houdini.py get $geanyconf plugins active_plugins)
+file=/usr/lib/$libdir/geany/projectorganizer.so
+if ! [[ ";$plugins" =~ ";$file;" ]]; then
+    set-option $geanyconf plugins active_plugins "$plugins$file;"
+fi
+
+# Geany: Select project tab in sidebar
+set-option $geanyconf geany sidebar_page 2
+echo
+
+# File manager: Disable 'Show options for removable media' (only on Pi)
+fmconf=$HOME/.config/pcmanfm/LXDE-pi/pcmanfm.conf
+if [ -x /usr/bin/pcmanfm ]; then
+    echo "*** Installing file manager settings"
+    set-option $fmconf volume mount_on_startup 1
+    set-option $fmconf volume mount_removable 1
+    set-option $fmconf volume autorun 0
+    echo
+fi
+
+echo "*** Installing default settings for Minicom"
+cp minirc.dfl $HOME/.minirc.dfl
+echo
+
+echo Done!
