@@ -15,8 +15,7 @@ OBJCOPY = arm-none-eabi-objcopy
 
 # Use ld for linking to help with the explanation
 %.elf: %.o startup.o
-	$(LD) -T NRF51822.ld $^ \
-		$(LIBGCC) -o $@ -Map $*.map
+	$(LD) -T NRF51822.ld $^ -o $@ -Map $*.map
 	$(SIZE) $@
 
 %.hex: %.elf
@@ -31,15 +30,6 @@ upload: upload-echo
 
 upload-%: %.hex
 	cp $< /media/$(USER)/MICROBIT
-
-# Find libgcc: find the first part of the gcc search path.
-GCCLIB := $(shell $(CC) --print-search-dirs \
-		| sed -n '/^libraries: =\([^:]*\)\/:.*/s//\1/p')
-# Then try a couple of likely subdirectories for the library.
-LIBGCC := $(word 1,$(wildcard \
-		$(GCCLIB)/thumb/v6-m/libgcc.a \
-		$(GCCLIB)/armv6-m/libgcc.a \
-		$(GCCLIB)/thumb/v6-m/nofp/libgcc.a) UNKNOWN)
 
 clean:
 	rm -f *.hex *.elf *.map *.o test-*
