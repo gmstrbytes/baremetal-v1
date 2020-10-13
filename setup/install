@@ -26,19 +26,9 @@ echo "*** Installing packages"
 sudo apt-get -y install \
      gcc-arm-none-eabi gdb-arm-none-eabi \
      pulseview sigrok-firmware-fx2lafw \
-     geany geany-plugin-projectorganizer \
-     minicom openocd python3
+     minicom geany geany-plugin-projectorganizer \
+     openocd python3
 echo
-
-# echo "*** Installing pyocd"
-# sudo apt-get -y install python3-pip
-# # carefully avoiding the Rust backend cmsis-pack-manager ...
-# sudo apt-get -y install python3-colorama python3-intelhex \
-#      python3-intervaltree python3-prettytable python3-pyelftools \
-#      python3-usb python3-six python3-future
-# sudo pip3 install pylink-square pyyaml
-# sudo pip3 install --no-deps pyocd
-# echo
 
 vers=$(dpkg-query -W -f '${Version}\n' geany)
 regexp="-$gver\$"
