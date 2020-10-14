@@ -18,7 +18,6 @@ GDB=`which arm-none-eabi-gdb` || GDB=`which gdb-multiarch` \
 
 # Start up the debug server: use "set -m" to protect from interrupts
 set -m
-# pyocd gdbserver 2>/dev/null &
 openocd -f interface/cmsis-dap.cfg -f target/nrf51.cfg & # >/dev/null 2>&1 &
 server=$!
 
@@ -32,3 +31,5 @@ $GDB $file -ex 'target extended-remote :3333'
 # When gdb stops, kill the server and wait for it to die
 kill $server 2>/dev/null
 wait $server 2>/dev/null
+
+exit 0
