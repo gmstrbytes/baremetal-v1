@@ -62,7 +62,7 @@ set-option () {
 echo "*** Making personalised settings for Geany"
 mkdir -p $HOME/.config/geany/filedefs
 geanyexts=$HOME/.config/geany/filetype_extensions.conf 
-set-option $geanyexts Extensions GnuAs ''
+set-option $geanyexts Extensions GnuAS ''
 set-option $geanyexts Extensions GnuARM '*.s;*.S;'
 cp filetypes.GnuARM.conf $HOME/.config/geany/filedefs
 echo
