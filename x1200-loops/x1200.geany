@@ -18,7 +18,7 @@ detect_indent_width=true
 indent_mode=2
 
 [project]
-name=x1000
+name=x1200
 base_path=.
 description=
 file_patterns=*.c;*.s;Makefile;*.ld;*.h;
@@ -28,16 +28,22 @@ long_line_behaviour=1
 long_line_column=72
 
 [build-menu]
-filetypes=C;
-CFT_00_LB=_Make
+filetypes=GnuARM;C;
+CFT_00_LB=Make
 CFT_00_CM=make
 CFT_00_WD=
-CFT_01_LB=_Upload
+CFT_01_LB=Upload
 CFT_01_CM=make upload
 CFT_01_WD=
 CFT_02_LB=
 CFT_02_CM=
 CFT_02_WD=
+GnuARMFT_00_LB=Make me
+GnuARMFT_00_CM=make %e.hex
+GnuARMFT_00_WD=
+GnuARMFT_01_LB=Upload me
+GnuARMFT_01_CM=make upload-%e
+GnuARMFT_01_WD=
 NF_00_LB=
 NF_00_CM=
 NF_00_WD=
@@ -53,8 +59,8 @@ NF_03_WD=
 EX_00_LB=Minicom
 EX_00_CM=minicom -D /dev/ttyACM0 -b 9600
 EX_00_WD=
-EX_01_LB=Debug
-EX_01_CM=make debug
+EX_01_LB=Debug me
+EX_01_CM=make debug-%e
 EX_01_WD=
 
 [prjorg]

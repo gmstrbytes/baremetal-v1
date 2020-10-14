@@ -1,21 +1,24 @@
-# x1000-echo/Makefile
+# x1200-loops/Makefile
 # Copyright (c) 2020 J. M. Spivey
 
-all: echo.hex
+all: mult.hex
 
 CC = arm-none-eabi-gcc
 CPU = -mcpu=cortex-m0 -mthumb
 CFLAGS = -O -g -Wall -ffreestanding
-LD = arm-none-eabi-ld
+AS = arm-none-eabi-as
 SIZE = arm-none-eabi-size
 OBJCOPY = arm-none-eabi-objcopy
 
 %.o: %.c
 	$(CC) $(CPU) $(CFLAGS) -c $< -o $@
 
-# Use ld for linking to help with the explanation
-%.elf: %.o startup.o
-	$(LD) -T NRF51822.ld $^ -o $@ -Map $*.map
+%.o: %.s
+	$(AS) $(CPU) $< -o $@
+
+%.elf: %.o fmain.o lib.o startup.o
+	$(CC) $(CPU) $(CFLAGS) -T NRF51822.ld \
+		$^ -nostdlib -lgcc -o $@ -Wl,-Map,$*.map
 	$(SIZE) $@
 
 %.hex: %.elf
@@ -26,12 +29,12 @@ SORRY = echo "Please say 'make $@.hex' to compile the '$@' program"
 %: %.s; @$(SORRY)
 %: %.o; @$(SORRY)
 
-upload: upload-echo
+upload: upload-mult
 
 upload-%: %.hex
 	cp $< /media/$(USER)/MICROBIT
 
-debug: debug-echo
+debug: debug-mult
 
 debug-%:
 	../setup/debug $*.elf
@@ -44,3 +47,5 @@ clean:
 
 ###
 
+fmain.o: lib.h hardware.h
+lib.o: lib.h
