@@ -131,20 +131,18 @@ void spin(void) {
      }          
 }
 
-#define stringify(x) #x
-#define WEAK_ALIAS(x) __attribute((weak, alias(stringify(x))))
+void default_handler(void);
 
-#ifdef MICROBE
+#ifndef MICROBE
 void default_handler(void) {
-    int irq = active_irq();
-    os_interrupt(irq);
+    spin();
 }
-#else
-#define default_handler spin
 #endif
 
-#define HANDLER(name) \
-     void name(void) WEAK_ALIAS(default_handler)
+// The linker script makes all these handlers into weak aliases for
+// default_handler.
+
+#define HANDLER(name)  void name(void)
 
 HANDLER(nmi_handler);
 HANDLER(hardfault_handler);
