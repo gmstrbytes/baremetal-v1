@@ -29,16 +29,6 @@ SORRY = echo "Please say 'make $@.hex' to compile the '$@' program"
 %: %.s; @$(SORRY)
 %: %.o; @$(SORRY)
 
-upload: upload-mult
-
-upload-%: %.hex
-	cp $< /media/$(USER)/MICROBIT
-
-debug: debug-mult
-
-debug-%:
-	../setup/debug $*.elf
-
 clean:
 	rm -f *.hex *.elf *.map *.o test-*
 

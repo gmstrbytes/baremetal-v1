@@ -33,7 +33,7 @@ CFT_00_LB=_Make
 CFT_00_CM=make
 CFT_00_WD=
 CFT_01_LB=_Upload
-CFT_01_CM=make upload
+CFT_01_CM=../setup/upload echo.hex
 CFT_01_WD=
 CFT_02_LB=
 CFT_02_CM=
@@ -54,7 +54,7 @@ EX_00_LB=Minicom
 EX_00_CM=minicom -D /dev/ttyACM0 -b 9600
 EX_00_WD=
 EX_01_LB=Debug
-EX_01_CM=make debug
+EX_01_CM=../setup/debug echo.elf
 EX_01_WD=
 
 [prjorg]

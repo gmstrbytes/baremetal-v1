@@ -1,4 +1,4 @@
-@ x1200/func.s
+@ x1200/mult.s
 @ Copyright (c) 2018-20 J. M. Spivey
 
         .syntax unified
@@ -10,8 +10,8 @@ func:
 @ ----------------
 @ Two parameters a, b are in registers r0 and r1
 
-@@@ Keep x and y in r0 and r1; compute the result z in r2, maintaining
-@@@ the relationship a * b = x * y + z
+@@@ Keep x and y in r0 and r1; compute the result z in r2, 
+@@@ maintaining the relationship a * b = x * y + z.
 
         movs r2, #0             @ Initially z = 0
 loop:   

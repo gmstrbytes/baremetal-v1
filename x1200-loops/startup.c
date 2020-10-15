@@ -21,8 +21,10 @@ void os_interrupt(int irq);
 extern unsigned char __data_start[], __data_end[],
      __bss_start[], __bss_end[], __etext[], __stack[];
 
-/* The next four routines can be used in C compiler output */
+/* The next four routines can be used in C compiler output, even
+   if not mentioned in the source. */
 
+/* memcpy -- copy n bytes from src to dest (non-overlapping) */
 void *memcpy(void *dest, const void *src, unsigned n) {
     unsigned char *p = dest;
     const unsigned char *q = src;
@@ -30,6 +32,7 @@ void *memcpy(void *dest, const void *src, unsigned n) {
     return dest;
 }
 
+/* memmove -- copy n bytes from src to dest, allowing overlaps */
 void *memmove(void *dest, const void *src, unsigned n) {
     unsigned char *p = dest;
     const unsigned char *q = src;
@@ -42,12 +45,14 @@ void *memmove(void *dest, const void *src, unsigned n) {
     return dest;
 }
     
+/* memset -- set n bytes of dest to byte x */
 void *memset(void *dest, unsigned x, unsigned n) {
     unsigned char *p = dest;
     while (n-- > 0) *p++ = x;
     return dest;
 }
 
+/* memcmp -- compare n bytes */
 int memcmp(const void *pp, const void *qq, int n) {
     const unsigned char *p = pp, *q = qq;
     while (n-- > 0) {
@@ -131,8 +136,8 @@ void spin(void) {
 
 #ifdef MICROBE
 void default_handler(void) {
-     int irq = GET_FIELD(SCB_ICSR, SCB_ICSR_VECTACTIVE);
-     os_interrupt(irq-16);
+    int irq = active_irq();
+    os_interrupt(irq);
 }
 #else
 #define default_handler spin
@@ -172,57 +177,59 @@ HANDLER(swi3_handler);
 HANDLER(swi4_handler);
 HANDLER(swi5_handler);
 
-// Entries filled with default_handler are unused by the hardware.  Getting
-// such an interrupt would be a real surprise!
+// This vector table is placed at address 0 in the flash by directives
+// in the linker script.  Entries directly filled with default_handler
+// are unused by the hardware.  Getting such an interrupt would be a
+// real surprise!
 
 void *__vectors[] __attribute((section(".vectors"))) = {
     __stack,                    // -16
     __reset,
     nmi_handler,
     hardfault_handler,
-    default_handler,           // -12
+    default_handler,            // -12
     default_handler,
     default_handler,
     default_handler,
-    default_handler,           //  -8
+    default_handler,            //  -8
     default_handler,
     default_handler,
     svc_handler,
-    default_handler,           // -4
+    default_handler,            // -4
     default_handler,
     pendsv_handler,
     systick_handler,
     
     /* external interrupts */
-    power_clock_handler,       //  0
+    power_clock_handler,        //  0
     radio_handler,
     uart_handler,
     spi0_twi0_handler,
-    spi1_twi1_handler,         //  4
+    spi1_twi1_handler,          //  4
     default_handler,
     gpiote_handler,
     adc_handler,
-    timer0_handler,            //  8
+    timer0_handler,             //  8
     timer1_handler,
     timer2_handler,
     rtc0_handler,
-    temp_handler,              // 12
+    temp_handler,               // 12
     rng_handler,
     ecb_handler,
     ccm_aar_handler,
-    wdt_handler,               // 16
+    wdt_handler,                // 16
     rtc1_handler,
     qdec_handler,
     lpcomp_handler,
-    swi0_handler,              // 20
+    swi0_handler,               // 20
     swi1_handler,
     swi2_handler,
     swi3_handler,
-    swi4_handler,              // 24
+    swi4_handler,               // 24
     swi5_handler,
     default_handler,
     default_handler,
-    default_handler,           // 28
+    default_handler,            // 28
     default_handler,
     default_handler,
     default_handler

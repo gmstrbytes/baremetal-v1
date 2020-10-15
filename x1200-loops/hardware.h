@@ -521,6 +521,9 @@ void irq_priority(int irq, unsigned priority);
 /* reschedule -- request PendSC interrupt */
 #define reschedule()  SCB_ICSR = BIT(SCB_ICSR_PendSVSet)
 
+/* active_irq -- find active interrupt: -16 to 31 */
+#define active_irq()  (GET_FIELD(SCB_ICSR, SCB_ICSR_VECTACTIVE) - 16)
+
 
 /* One assembler macro -- forgive me! */
 #define pause()         asm volatile ("wfe")
