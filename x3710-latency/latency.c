@@ -7,8 +7,6 @@ void timer2_handler(void) {
     // Reset one of the GPIO pins
     GPIOTE_OUT[0] = 1;
 
-    // Without: 13.95us; with: 14.39us; difference = 0.45us = 7 cycles
-
     // Disable the interrupt
     disable_irq(TIMER2_IRQ);
 
@@ -38,7 +36,7 @@ void timer_task(int arg) {
     PPI_CH[1].TEP = &GPIOTE_OUT[1];
     PPI_CHENSET = BIT(0) | BIT(1);
 
-    // GPIOTE channels 0, 1, 2 toggle three pins
+    // GPIOTE channels 0 and 1 toggle two pins
     GPIOTE_CONFIG[0] =
         FIELD(GPIOTE_CONFIG_MODE, GPIOTE_MODE_Task)
         | FIELD(GPIOTE_CONFIG_PSEL, PAD3)
