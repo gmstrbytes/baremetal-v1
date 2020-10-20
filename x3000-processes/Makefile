@@ -5,22 +5,22 @@ all: valentine.hex
 
 CC = arm-none-eabi-gcc
 CPU = -mcpu=cortex-m0 -mthumb
-CFLAGS = -O -g -Wall -ffreestanding -I ../microbe
+CFLAGS = -O -g -Wall -ffreestanding -I ../microbian
 SIZE = arm-none-eabi-size
 OBJCOPY = arm-none-eabi-objcopy
 
 %.o: %.c
 	$(CC) $(CPU) $(CFLAGS) -c $< -o $@
 
-%.elf: %.o ../microbe/microbe.a
-	$(CC) $(CPU) $(CFLAGS) -T ../microbe/NRF51822.ld \
+%.elf: %.o ../microbian/microbian.a
+	$(CC) $(CPU) $(CFLAGS) -T ../microbian/NRF51822.ld \
 		$^ -nostdlib -lgcc -lc -o $@ -Wl,-Map,$*.map
 	$(SIZE) $@
 
 %.hex: %.elf
 	$(OBJCOPY) -O ihex $< $@
 
-../microbe/microbe.a:
+../microbian/microbian.a:
 	$(MAKE) -C $(@D) $(@F)
 
 # Nuke the default rules for building executables
@@ -36,4 +36,4 @@ clean:
 
 ###
 
-valentine.o: ../microbe/hardware.h ../microbe/lib.h ../microbe/microbe.h
+valentine.o: ../microbian/hardware.h ../microbian/lib.h ../microbian/microbian.h
