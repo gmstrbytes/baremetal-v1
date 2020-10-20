@@ -6,7 +6,7 @@
 /* init -- main program, creates application processes */
 void init(void);
 
-#ifdef MICROBE
+#ifdef MICROBIAN
 /* os_init -- hook to set up scheduler data structures */
 void os_init(void);
 
@@ -77,7 +77,7 @@ void __reset(void) {
      memcpy(__data_start, __etext, __data_end - __data_start);
      memset(__bss_start, 0, __bss_end - __bss_start);
 
-#ifdef MICROBE
+#ifdef MICROBIAN
      os_init();                 // Initialise the scheduler.
      init();                    // Let the program initialise itself.
      os_start();                // Start the scheduler -- never returns.
@@ -133,7 +133,7 @@ void spin(void) {
 
 void default_handler(void);
 
-#ifndef MICROBE
+#ifndef MICROBIAN
 void default_handler(void) {
     spin();
 }
@@ -142,38 +142,36 @@ void default_handler(void) {
 // The linker script makes all these handlers into weak aliases for
 // default_handler.
 
-#define HANDLER(name)  void name(void)
-
-HANDLER(nmi_handler);
-HANDLER(hardfault_handler);
-HANDLER(svc_handler);
-HANDLER(pendsv_handler);
-HANDLER(systick_handler);
-HANDLER(uart_handler);
-HANDLER(timer0_handler);
-HANDLER(timer1_handler);
-HANDLER(timer2_handler);
-HANDLER(power_clock_handler);
-HANDLER(radio_handler);
-HANDLER(spi0_twi0_handler);
-HANDLER(spi1_twi1_handler);
-HANDLER(gpiote_handler);
-HANDLER(adc_handler);
-HANDLER(rtc0_handler);
-HANDLER(temp_handler);
-HANDLER(rng_handler);
-HANDLER(ecb_handler);
-HANDLER(ccm_aar_handler);
-HANDLER(wdt_handler);
-HANDLER(rtc1_handler);
-HANDLER(qdec_handler);
-HANDLER(lpcomp_handler);
-HANDLER(swi0_handler);
-HANDLER(swi1_handler);
-HANDLER(swi2_handler);
-HANDLER(swi3_handler);
-HANDLER(swi4_handler);
-HANDLER(swi5_handler);
+void nmi_handler(void);
+void hardfault_handler(void);
+void svc_handler(void);
+void pendsv_handler(void);
+void systick_handler(void);
+void uart_handler(void);
+void timer0_handler(void);
+void timer1_handler(void);
+void timer2_handler(void);
+void power_clock_handler(void);
+void radio_handler(void);
+void spi0_twi0_handler(void);
+void spi1_twi1_handler(void);
+void gpiote_handler(void);
+void adc_handler(void);
+void rtc0_handler(void);
+void temp_handler(void);
+void rng_handler(void);
+void ecb_handler(void);
+void ccm_aar_handler(void);
+void wdt_handler(void);
+void rtc1_handler(void);
+void qdec_handler(void);
+void lpcomp_handler(void);
+void swi0_handler(void);
+void swi1_handler(void);
+void swi2_handler(void);
+void swi3_handler(void);
+void swi4_handler(void);
+void swi5_handler(void);
 
 // This vector table is placed at address 0 in the flash by directives
 // in the linker script.  Entries directly filled with default_handler

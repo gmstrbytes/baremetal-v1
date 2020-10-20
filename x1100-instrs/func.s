@@ -10,7 +10,10 @@ func:
 @ ----------------
 @ Two parameters are in registers r0 and r1
 
-        adds r0, r0, r1         @ Add r0 and r1, result in r0
+        adds r0, r0, #1         @ Add r0 and r1, result in r0
+        muls r0, r1
+        muls r0, r1, r0
+        muls r0, r0, r1
 
 @ Result is now in register r0
 @ ----------------
