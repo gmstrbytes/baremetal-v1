@@ -96,9 +96,9 @@ argument to be a macro that expands the a position, width pair. */
 #define RNG_IRQ    13
 
 /* System registers */
-                                                                
 #define SCB_CPUID               ADDR(0xE000ED00)
 #define SCB_ICSR                ADDR(0xE000ED04)
+#define SCB_SCR                 ADDR(0xE000ED10)
 #define SCB_SHPR               ARRAY(0xE000ED1C)
 #define NVIC_ISER              ARRAY(0xE000E100)
 #define NVIC_ICER              ARRAY(0xE000E180)
@@ -108,8 +108,12 @@ argument to be a macro that expands the a position, width pair. */
 
 #define POWER_RAMON             ADDR(0x40000524)
 
-#define SCB_ICSR_PendSVSet 28
+#define SCB_ICSR_PENDSVSET 28
 #define SCB_ICSR_VECTACTIVE 0, 6
+
+#define SCB_SCR_SLEEPONEXIT 1
+#define SCB_SCR_SLEEPDEEP 2
+#define SCB_SCR_SEVONPEND 4
 
 /* Clock control */
 #define CLOCK_HFCLKSTART ADDR(0x40000000)
@@ -519,7 +523,7 @@ void irq_priority(int irq, unsigned priority);
 #define clear_pending(irq)  NVIC_ICPR[0] = BIT(irq)
 
 /* reschedule -- request PendSC interrupt */
-#define reschedule()  SCB_ICSR = BIT(SCB_ICSR_PendSVSet)
+#define reschedule()  SCB_ICSR = BIT(SCB_ICSR_PENDSVSET)
 
 /* active_irq -- find active interrupt: -16 to 31 */
 #define active_irq()  (GET_FIELD(SCB_ICSR, SCB_ICSR_VECTACTIVE) - 16)

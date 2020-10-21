@@ -28,6 +28,7 @@ typedef unsigned char byte;
 #define P_HIGH 1                // Responsive
 #define P_LOW 2                 // Normal
 #define P_IDLE 3                // The idle process
+#define NPRIO 3                 // Number of non-idle priorities
 
 typedef struct {                // 16 bytes
     unsigned short m_type;      // Type of message

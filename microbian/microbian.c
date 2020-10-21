@@ -130,7 +130,7 @@ static void microbian_dump(void) {
 /* os_readyq -- one queue for each priority */
 static struct queue {
     struct proc *q_head, *q_tail;
-} os_readyq[3];
+} os_readyq[NPRIO];
 
 /* make_ready -- add process to end of appropriate queue */
 static inline void make_ready(struct proc *p, int prio) {
@@ -149,7 +149,7 @@ static inline void make_ready(struct proc *p, int prio) {
 
 /* choose_proc -- the current process is blocked: pick a new one */
 static inline void choose_proc(void) {
-    for (int p = 0; p < 3; p++) {
+    for (int p = 0; p < NPRIO; p++) {
         struct queue *q = &os_readyq[p];
         if (q->q_head != NULL) {
             os_current = q->q_head;
@@ -355,8 +355,6 @@ void hardfault_handler(void) {
 
 /* INITIALISATION */
 
-#define IDLE_STACK 128
-
 static struct proc *init_proc(char *name, unsigned stksize) {
     int pid;
     struct proc *p;
@@ -391,12 +389,14 @@ static struct proc *init_proc(char *name, unsigned stksize) {
     return p;
 }
 
+#define IDLE_STACK 128
+
 /* os_init -- set up initial values */
 void os_init(void) {
     // Create idle task as process 0
     idle_proc = init_proc("IDLE", IDLE_STACK);
     idle_proc->p_state = IDLING;
-    idle_proc->p_priority = 3;
+    idle_proc->p_priority = P_IDLE;
 }
 
 #define INIT_PSR 0x01000000     /* Thumb bit is set */
