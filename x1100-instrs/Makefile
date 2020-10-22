@@ -50,3 +50,4 @@ clean:
 
 fmain.o: lib.h hardware.h
 lib.o: lib.h
+startup.o: hardware.h

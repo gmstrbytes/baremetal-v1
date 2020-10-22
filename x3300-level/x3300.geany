@@ -18,7 +18,7 @@ detect_indent_width=true
 indent_mode=2
 
 [project]
-name=x3000
+name=x3300
 base_path=.
 description=
 file_patterns=*.c;*.s;Makefile;*.ld;*.h;

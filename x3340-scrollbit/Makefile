@@ -1,28 +1,29 @@
-# x1200-loops/Makefile
+# x3340-scrollbit/Makefile
 # Copyright (c) 2020 J. M. Spivey
 
-all: mult.hex
+all: scrollbit.hex
 
 CC = arm-none-eabi-gcc
 CPU = -mcpu=cortex-m0 -mthumb
-CFLAGS = -O -g -Wall -ffreestanding
-AS = arm-none-eabi-as
+CFLAGS = -O -g -Wall -ffreestanding -I ../microbian
 SIZE = arm-none-eabi-size
 OBJCOPY = arm-none-eabi-objcopy
+
+vpath %.h ../microbian
 
 %.o: %.c
 	$(CC) $(CPU) $(CFLAGS) -c $< -o $@
 
-%.o: %.s
-	$(AS) $(CPU) $< -o $@
-
-%.elf: %.o fmain.o lib.o startup.o
-	$(CC) $(CPU) $(CFLAGS) -T nRF51822.ld \
-		$^ -nostdlib -lgcc -o $@ -Wl,-Map,$*.map
+%.elf: %.o font.o ../microbian/microbian.a
+	$(CC) $(CPU) $(CFLAGS) -T ../microbian/nRF51822.ld \
+		$^ -nostdlib -lgcc -lc -o $@ -Wl,-Map,$*.map
 	$(SIZE) $@
 
 %.hex: %.elf
 	$(OBJCOPY) -O ihex $< $@
+
+../microbian/microbian.a:
+	$(MAKE) -C $(@D) $(@F)
 
 # Nuke the default rules for building executables
 SORRY = echo "Please say 'make $@.hex' to compile the '$@' program"
@@ -37,6 +38,5 @@ clean:
 
 ###
 
-fmain.o: lib.h hardware.h
-lib.o: lib.h
-startup.o: hardware.h
+scrollbit.o: hardware.h lib.h microbian.h
+scrollbit.o font.o: font.h

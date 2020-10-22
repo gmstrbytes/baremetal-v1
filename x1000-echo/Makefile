@@ -34,3 +34,5 @@ clean:
 
 ###
 
+echo.o startup.o: hardware.h
+

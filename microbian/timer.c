@@ -6,7 +6,7 @@
 
 #define TICK 5                  /* Interval between updates (ms) */
 
-#define MAX_TIMERS 4
+#define MAX_TIMERS 8
 
 /* Millis will overflow in about 46 days, but that's long enough. */
 

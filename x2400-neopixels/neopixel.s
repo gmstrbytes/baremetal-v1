@@ -38,7 +38,7 @@ neoframe:
         lsls r2, #2             @ Multiply pixel count by 4
         beq done                @ Finished if it was zero
         adds r1, r1, r2         @ Adjust r1 to end of buffer
-        negs r2, r2             @ Set r2 to (-ve) offset of next pixel
+        negs r2, r2             @ Set r2 to (-ve) offset of first pixel
         movs r3, #24            @ Set r3 to bit index in pixel
         movs r4, #1             @ Set r4 to GPIO bit
         lsls r4, r4, r0
@@ -50,22 +50,22 @@ nextbit:
         lsrs r0, r0, r3         @ [1.5] Put relevant bit in C flag
         bcs high                @ [1.6] Branch if bit is 1
         @@ Phase 2
-        str r4, [r5, #CLR]      @ [2.1,2] Output low if a 0
+        str r4, [r5, #CLR]      @ [2.1] Output low if bit is 0
 high:   
         nop                     @ [2.3]
-        subs r3, r3, #1         @ [2.4] Update pixel index
-        beq last                @ [2.5] Branch if this is last bit of pixel
-        nop; nop                @ [2.6,7]
+        subs r3, r3, #1         @ [2.4] Update bit index
+        beq lastbit             @ [2.5] Branch if last bit
+        nop; nop                @ [2.6]
         @@ Phase 3 -- normal bit
         str r4, [r5, #CLR]      @ [3.1] Output low if not already done
         nop; nop                @ [3.3]
-        b nextbit               @ [3.5,6,7] Go for next bit
-last:
+        b nextbit               @ [3.5] Go for next bit
+lastbit:        
         @@ Phase 3 -- last bit of pixel
-        str r4, [r5, #CLR]      @ [3.1,2] Output low
+        str r4, [r5, #CLR]      @ [3.1] Output low
         movs r3, #24            @ [3.3] Reset bit index
-        adds r2, #4             @ [3.4] Update pixel index
-        blt nextbit             @ [3.5,6,7] Go for first bit of next pixel
+        adds r2, r2, #4         @ [3.4] Update pixel index      
+        blt nextbit             @ [3.5] Go for first bit of next pixel
 done:   
         pop {r4, r5}
         bx lr

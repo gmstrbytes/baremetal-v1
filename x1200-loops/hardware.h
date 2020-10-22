@@ -1,20 +1,19 @@
 // common/hardware.h
-// Copyright (c) 2018 J. M. Spivey
+// Copyright (c) 2018-20 J. M. Spivey
 
-/* Hardware register definitions for NRF51822 */
+#define UBIT_V1 1
+
+/* Hardware register definitions for nRF51822 */
 
 #define BIT(i) (1 << (i))
-
 #define SET_BIT(reg, n) reg |= BIT(n)
-
 #define CLR_BIT(reg, n) reg &= ~BIT(n)
-
 #define SET_BYTE(reg, n, v) \
      reg = (reg & ~(0xff << 8*n)) | ((v & 0xff) << 8*n)
 
 /* The macros SET_FIELD, etc., are defined in an indirect way that
 permits (because of the timing of CPP macro expansion) the 'field'
-argument to be a macro that expands the a position, width pair. */
+argument to be a macro that expands the a 'position, width' pair. */
 
 #define SET_FIELD(reg, field, val) __SET_FIELD(reg, field, val)
 #define __SET_FIELD(reg, pos, wid, val) \
@@ -98,8 +97,14 @@ argument to be a macro that expands the a position, width pair. */
 /* System registers */
 #define SCB_CPUID               ADDR(0xE000ED00)
 #define SCB_ICSR                ADDR(0xE000ED04)
+#define   SCB_ICSR_PENDSVSET 28
+#define   SCB_ICSR_VECTACTIVE 0, 6
 #define SCB_SCR                 ADDR(0xE000ED10)
+#define   SCB_SCR_SLEEPONEXIT 1
+#define   SCB_SCR_SLEEPDEEP 2
+#define   SCB_SCR_SEVONPEND 4
 #define SCB_SHPR               ARRAY(0xE000ED1C)
+
 #define NVIC_ISER              ARRAY(0xE000E100)
 #define NVIC_ICER              ARRAY(0xE000E180)
 #define NVIC_ISPR              ARRAY(0xE000E200)
@@ -108,20 +113,14 @@ argument to be a macro that expands the a position, width pair. */
 
 #define POWER_RAMON             ADDR(0x40000524)
 
-#define SCB_ICSR_PENDSVSET 28
-#define SCB_ICSR_VECTACTIVE 0, 6
-
-#define SCB_SCR_SLEEPONEXIT 1
-#define SCB_SCR_SLEEPDEEP 2
-#define SCB_SCR_SEVONPEND 4
 
 /* Clock control */
-#define CLOCK_HFCLKSTART ADDR(0x40000000)
-#define CLOCK_LFCLKSTART ADDR(0x40000008)
-#define CLOCK_HFCLKSTARTED ADDR(0x40000100)
-#define CLOCK_LFCLKSTARTED ADDR(0x40000104)
-#define CLOCK_LFCLKSRC  ADDR(0x40000518)
-#define CLOCK_XTALFREQ  ADDR(0x40000550)
+#define CLOCK_HFCLKSTART        ADDR(0x40000000)
+#define CLOCK_LFCLKSTART        ADDR(0x40000008)
+#define CLOCK_HFCLKSTARTED      ADDR(0x40000100)
+#define CLOCK_LFCLKSTARTED      ADDR(0x40000104)
+#define CLOCK_LFCLKSRC          ADDR(0x40000518)
+#define CLOCK_XTALFREQ          ADDR(0x40000550)
      
 #define CLOCK_LFCLKSRC_RC 0
 #define CLOCK_XTALFREQ_16MHz 0xFF
@@ -200,8 +199,8 @@ argument to be a macro that expands the a position, width pair. */
 
 /* PPI */
 struct _ppi_chg {
-    unsigned EN;
-    unsigned DIS;
+    unsigned volatile EN;
+    unsigned volatile DIS;
 };
     
 struct _ppi_ch {
@@ -215,6 +214,7 @@ struct _ppi_ch {
 #define PPI_CHENCLR              ADDR(0x4001f508)
 #define PPI_CH    ((struct _ppi_ch *) 0x4001f510)
 #define PPI_CHGRP               ARRAY(0x4001f800)
+
 
 /* Radio */
 // Tasks
@@ -280,6 +280,7 @@ struct _ppi_ch {
 #define RADIO_INT_READY 0
 #define RADIO_INT_END 3
 #define RADIO_INT_DISABLED 4
+
 
 /* TIMERS: Timer 0 is 8/16/24/32 bit, Timers 1 and 2 are 8/16 bit. */
 // Timer 0
@@ -353,7 +354,8 @@ struct _ppi_ch {
 #define TIMER2_PRESCALER         ADDR(0x4000a510)
 #define TIMER2_CC               ARRAY(0x4000a540)
 
-/* RNG */
+
+/* Random Number Generator */
 // Tasks
 #define RNG_START                ADDR(0x4000D000)
 #define RNG_STOP                 ADDR(0x4000D004)

@@ -1,5 +1,5 @@
 // x3000/valentine.c
-// Copyright (c) 2018 J. M. Spivey
+// Copyright (c) 2020 J. M. Spivey
 
 #include "hardware.h"
 #include "microbian.h"

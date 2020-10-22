@@ -3,20 +3,11 @@
 
 #include "hardware.h"
 
-#define NPIX 12
-#define STEP 2
-#define NEO PAD0
+#define NPIX 12                 // Number of pixels in string
+#define STEP 2                  // Colour step between pixels
+#define NEO PAD0                // Pin for output signal
 
-/* delay -- pause for n microseconds */
-void delay(unsigned n) {
-    unsigned t = n << 1;
-    while (t > 0) {
-        // 500nsec per iteration at 16MHz
-        nop(); nop(); nop();
-        t--;
-    }
-}
-
+/* neoframe -- output a neopixel string */
 void neoframe(unsigned pin, unsigned *buf, int n) {
     // With carefully adjusted delays, this gives exact timing for each
     // pixel, and a tolerable delay of 11 cycles between pixels
@@ -37,25 +28,28 @@ void neoframe(unsigned pin, unsigned *buf, int n) {
     }
 }
 
+/* delay -- pause for n microseconds */
+void delay(unsigned n) {
+    unsigned t = n << 1;
+    while (t > 0) {
+        // 500nsec per iteration at 16MHz
+        nop(); nop(); nop();
+        t--;
+    }
+}
+
 /* rgb -- assemble a colour from RGB components */
 unsigned RGB(unsigned r, unsigned g, unsigned b) {
+    // Note the awkward GRB colour order of Neopixels
     return ((g & 0xff) << 16) | ((r & 0xff) << 8) | (b & 0xff);
 }
 
 /* getR, getG, get B -- access R, G, B components of colour */
-unsigned getR(unsigned rgb) {
-    return (rgb >> 8) & 0xff;
-}
+unsigned getR(unsigned rgb) { return (rgb >> 8) & 0xff; }
+unsigned getG(unsigned rgb) { return (rgb >> 16) & 0xff; }
+unsigned getB(unsigned rgb) { return rgb & 0xff; }
 
-unsigned getG(unsigned rgb) {
-    return (rgb >> 16) & 0xff;
-}
-
-unsigned getB(unsigned rgb) {
-    return rgb & 0xff;
-}
-
-#define ISTEP 32
+#define ISTEP 32                // Number of steps between two colours
 
 /* interp -- interpolate between two colours */
 unsigned interp(int i, unsigned x, unsigned y) {
@@ -67,36 +61,51 @@ unsigned interp(int i, unsigned x, unsigned y) {
 
 #define INTEN 31
 
-/* hues 0 to 95 and cycle */
+/* hue -- find colour on cyclic colour triangle */
 unsigned hue(int i) {
-     int j = i & 0x1f;
+    int j = i & 0x1f;
 
-     switch ((i >> 5) % 3) {
-     case 0:
-          return interp(j, RGB(INTEN, 0, 0), RGB(0, INTEN, 0));
-     case 1:
-          return interp(j, RGB(0, INTEN, 0), RGB(0, 0, INTEN));
-     case 2:
-          return interp(j, RGB(0, 0, INTEN), RGB(INTEN, 0, 0));
-     default:
-          return 0;
-     }
+    switch ((i >> 5) % 3) {
+    case 0:
+        // Colours 0 to 31, 96 to 127, ... from red to green
+        return interp(j, RGB(INTEN, 0, 0), RGB(0, INTEN, 0));
+    case 1:
+        // Colours 32 to 63, 128 to 159, ... from green to blue
+        return interp(j, RGB(0, INTEN, 0), RGB(0, 0, INTEN));
+    case 2:
+        // Colours 64 to 95, 160 to 191, ... from blue to red
+        return interp(j, RGB(0, 0, INTEN), RGB(INTEN, 0, 0));
+    default:
+        return 0;
+    }
 }
 
+/* pix -- buffer for a frame of pixels */
 unsigned pix[NPIX];
 
+/* init -- main program */
 void init(void) {
      int u = 0;
 
+     // Set up pin NEO for output
      GPIO_OUT = 0;
      GPIO_DIRSET = BIT(NEO);
+
+     // Initialise to all pixels off
      neoframe(NEO, pix, NPIX);
 
      while (1) {
-          for (int i = 0; i < NPIX; i++)
-               pix[i] = hue(u + STEP * i);
-          neoframe(NEO, pix, NPIX);
-          u++;
-          delay(100000);
+         // Compute shifted rainbow pattern
+         for (int i = 0; i < NPIX; i++)
+             pix[i] = hue(u + STEP * i);
+
+         // Display it
+         neoframe(NEO, pix, NPIX);
+
+         // Shift next frame a bit further
+         u++;
+
+         // Delay before next frame
+         delay(100000);
      }
 }

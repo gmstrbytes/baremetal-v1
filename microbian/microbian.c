@@ -59,7 +59,8 @@ static void *sbrk(int inc) {
 
 static struct proc *new_proc(void) {
     if (__break2 - __break < sizeof(struct proc))
-        panic("No space for process");
+        panic("No space for process %u %u",
+              (unsigned) __break, (unsigned) __break2);
     __break2 -= sizeof(struct proc);
     return (struct proc *) __break2;
 }

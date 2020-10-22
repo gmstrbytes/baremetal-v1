@@ -17,7 +17,7 @@ OBJCOPY = arm-none-eabi-objcopy
 	$(AS) $(CPU) $< -o $@
 
 %.elf: %.o neopixel.o startup.o
-	$(CC) $(CPU) $(CFLAGS) -T NRF51822.ld \
+	$(CC) $(CPU) $(CFLAGS) -T nRF51822.ld \
 		$^ -nostdlib -lgcc -o $@ -Wl,-Map,$*.map
 	$(SIZE) $@
 
@@ -37,4 +37,4 @@ clean:
 
 ###
 
-rainbow.o: hardware.h
+rainbow.o rainbow2.o startup.o: hardware.h

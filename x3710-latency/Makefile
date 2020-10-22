@@ -9,11 +9,13 @@ CFLAGS = -O -g -Wall -ffreestanding -I ../microbian
 SIZE = arm-none-eabi-size
 OBJCOPY = arm-none-eabi-objcopy
 
+vpath %.h ../microbian
+
 %.o: %.c
 	$(CC) $(CPU) $(CFLAGS) -c $< -o $@
 
 %.elf: %.o ../microbian/microbian.a
-	$(CC) $(CPU) $(CFLAGS) -T ../microbian/NRF51822.ld \
+	$(CC) $(CPU) $(CFLAGS) -T ../microbian/nRF51822.ld \
 		$^ -nostdlib -lgcc -lc -o $@ -Wl,-Map,$*.map
 	$(SIZE) $@
 
@@ -36,4 +38,4 @@ clean:
 
 ###
 
-latency.o: ../microbian/hardware.h ../microbian/lib.h ../microbian/microbian.h
+latency.o: hardware.h microbian.h

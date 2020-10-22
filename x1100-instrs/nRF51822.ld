@@ -1,5 +1,5 @@
-/* common/NRF51822.ld */
-/* Copyright (c) 2018 J. M. Spivey */
+/* common/nRF51822.ld */
+/* Copyright (c) 2018-20 J. M. Spivey */
 
 MEMORY {
     FLASH (rx) : ORIGIN = 0x00000000, LENGTH = 0x40000

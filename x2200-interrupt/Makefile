@@ -1,22 +1,18 @@
-# x1200-loops/Makefile
+# x2200-interrupt/Makefile
 # Copyright (c) 2020 J. M. Spivey
 
-all: mult.hex
+all: primes2.hex
 
 CC = arm-none-eabi-gcc
 CPU = -mcpu=cortex-m0 -mthumb
 CFLAGS = -O -g -Wall -ffreestanding
-AS = arm-none-eabi-as
 SIZE = arm-none-eabi-size
 OBJCOPY = arm-none-eabi-objcopy
 
 %.o: %.c
 	$(CC) $(CPU) $(CFLAGS) -c $< -o $@
 
-%.o: %.s
-	$(AS) $(CPU) $< -o $@
-
-%.elf: %.o fmain.o lib.o startup.o
+%.elf: %.o lib.o startup.o
 	$(CC) $(CPU) $(CFLAGS) -T nRF51822.ld \
 		$^ -nostdlib -lgcc -o $@ -Wl,-Map,$*.map
 	$(SIZE) $@
@@ -37,6 +33,6 @@ clean:
 
 ###
 
-fmain.o: lib.h hardware.h
+primes2.o: hardware.h lib.h
 lib.o: lib.h
 startup.o: hardware.h
