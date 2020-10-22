@@ -100,4 +100,8 @@ echo "*** Installing default settings for Minicom"
 cp minirc.dfl $HOME/.minirc.dfl
 echo
 
-echo Done!
+echo "*** Generating Geany project files"
+/bin/bash genproj
+echo
+
+echo "*** Done!"

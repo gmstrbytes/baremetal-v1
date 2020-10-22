@@ -1,0 +1,25 @@
+#!/bin/bash
+# genproj
+
+dir=$(dirname $(dirname $(realpath $0)))
+
+project() {
+    proj=$1; type=$2; targ=$3; name=${proj%%-*}
+    sed -e "s/NAME/$name/" -e "s/XYZZY/$targ/" \
+        -e "s@MICROBIAN@$dir/microbian@" \
+        $dir/setup/$type.geany >$dir/$proj/$name.geany
+}
+
+project x1000-echo type2 echo
+project x1100-instrs type1 func
+project x1200-loops type1 mult
+project x2000-heart type2 heart
+project x2100-serial type2 primes
+project x2200-interrupt type2 primes2
+project x2300-intrmech type2 bitbang
+project x2400-neopixels type2 rainbow
+project x3000-processes type3 valentine
+project x3040-messages type3 pcount
+project x3300-level type3 level
+project x3340-scrollbit type3 scrollbit
+project x3710-latency type3 latency

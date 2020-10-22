@@ -18,7 +18,7 @@ detect_indent_width=true
 indent_mode=2
 
 [project]
-name=x3300
+name=NAME
 base_path=.
 description=
 file_patterns=*.c;*.s;Makefile;*.ld;*.h;
@@ -63,4 +63,4 @@ header_patterns=*.h;
 ignored_dirs_patterns=.*;CVS;
 ignored_file_patterns=*.o;*.obj;*.a;*.lib;*.so;*.dll;*.lo;*.la;*.class;*.jar;*.pyc;*.mo;*.gmo;*.elf;*.hex;
 generate_tag_prefs=0
-external_dirs=baremetal/microbian;
+external_dirs=MICROBIAN;
