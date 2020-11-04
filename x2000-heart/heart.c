@@ -34,6 +34,11 @@ void show(const unsigned *img, int n) {
     }
 }
 
+/* pressed -- test if a button is pressed */
+int pressed(int button) {
+    return (GPIO_IN & BIT(button)) == 0;
+}
+
 void init(void) {
     GPIO_DIR = 0xfff0;
     GPIO_PINCNF[BUTTON_A] = 0;

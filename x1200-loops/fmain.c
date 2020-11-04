@@ -116,7 +116,8 @@ char *fmt_fixed(unsigned t, unsigned n, int k) {
     p0 = p;
     while (d < k) {
         x = v % 10;
-        if (x > 0 || p < p0) *(--p) = x + '0';
+        if (x > 0 || p < p0 || d == k-1)
+            *(--p) = x + '0';
         v /= 10; d++;
     }
     v += n * (t / q);
@@ -128,18 +129,23 @@ char *fmt_fixed(unsigned t, unsigned n, int k) {
     return p;
 }
 
-#define ROW_MASK 0x0000e000
-#define COL_MASK 0x00001ff0
+#ifdef UBIT
+#define LIGHT 0x5fb0
 
-#define ROW0 13
-#define COL0 4
+#define FUDGE 20                // ticks of overhead for function call
+#define MULT 1
+#define DIV 1
+#define RES 25
+#define SCALE 4
+#endif
 
-#define R 1
-#define C 2
-
-#define LIGHT (1<<(ROW0+R)) | (~(1<<(COL0+C)) & COL_MASK)
-
-#define FUDGE 20                // cycles of overhead for function call
+#ifdef KL25Z
+#define FUDGE 0
+#define MULT 2
+#define DIV 3
+#define RES 125
+#define SCALE 3
+#endif
 
 extern int func(int a, int b);
 
@@ -149,6 +155,8 @@ void init(void) {
 
     serial_init();
     printf("\nHello micro:world!\n\n");
+
+#ifdef UBIT
     GPIO_DIRSET = ROW_MASK | COL_MASK;
 
     // Set up TIMER0 in 32 bit mode
@@ -156,23 +164,46 @@ void init(void) {
     TIMER0_BITMODE = TIMER_BITMODE_32Bit;
     TIMER0_PRESCALER = 0; // Count at 16MHz
     TIMER0_START = 1;
+#endif
+
+#ifdef KL25Z
+    pin_function(LED_BLUE, 1);
+    pin_mode(LED_BLUE, PORT_MODE_PullNone);
+    pin_dir(LED_BLUE, 1);
+    pin_value(LED_BLUE, 1);
+    
+    // Set up PIT to count at 24MHz
+    SET_BIT(SIM_SCGC6, SIM_SCGC6_PIT); // Enable clock
+    PIT_MCR = 0;
+    PIT0_LDVAL = 0xffffffff;
+#endif    
 
     while (1) {
         int a, b, c;
         a = getnum("a = ");
         b = getnum("b = ");
 
+#ifdef UBIT
         TIMER0_CLEAR = 1;
         GPIO_OUT = LIGHT;
         c = func(a, b);
         GPIO_OUT = 0;
         TIMER0_CAPTURE[0] = 1;
+        time = TIMER0_CC[0] - FUDGE;
+#endif
+        
+#ifdef KL25Z
+        PIT0_TCTRL = BIT(PIT_TCTRL_TEN);
+        pin_value(LED_BLUE, 0);
+        c = func(a, b);
+        time = ~PIT0_CVAL - FUDGE;
+        PIT0_TCTRL = 0;
+#endif
 
         printf("func(%d, %d) = %d\n", a, b, c);
         printf("func(%x, %x) = %x\n", a, b, c);
-
-        time = TIMER0_CC[0] - FUDGE;
         printf("%d cycle%s, %s microsec\n\n",
-               time, (time == 1 ? "" : "s"), fmt_fixed(time, 625, 4));
+               time*MULT, (time == 1 ? "" : "s"),
+               fmt_fixed(time/DIV, RES, SCALE));
     }
 }

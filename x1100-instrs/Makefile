@@ -41,7 +41,7 @@ LIBGCC := $(word 1,$(wildcard \
 		$(GCCLIB)/thumb/v6-m/nofp/libgcc.a) UNKNOWN)
 
 clean:
-	rm -f *.hex *.elf *.map *.o test-*
+	rm -f *.hex *.elf *.map *.o
 
 # Don't delete intermediate files
 .SECONDARY:

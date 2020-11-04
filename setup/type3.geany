@@ -18,7 +18,7 @@ detect_indent_width=true
 indent_mode=2
 
 [project]
-name=NAME
+name=@PROJNAME@
 base_path=.
 description=
 file_patterns=*.c;*.s;Makefile;*.ld;*.h;
@@ -63,4 +63,11 @@ header_patterns=*.h;
 ignored_dirs_patterns=.*;CVS;
 ignored_file_patterns=*.o;*.obj;*.a;*.lib;*.so;*.dll;*.lo;*.la;*.class;*.jar;*.pyc;*.mo;*.gmo;*.elf;*.hex;
 generate_tag_prefs=0
-external_dirs=MICROBIAN;
+external_dirs=@MICROBIAN@;
+
+[files]
+current_page=0
+FILE_NAME_0=0;C;0;EUTF-8;0;1;0;@MAINFILE@;0;4
+
+[VTE]
+last_dir=@PROJDIR@

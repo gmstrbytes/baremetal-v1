@@ -38,7 +38,6 @@ void serial_init(void) {
 
     // Interrupt for transmit only
     UART_INTENSET = BIT(UART_INT_TXDRDY);
-    irq_priority(UART_IRQ, 255);
     enable_irq(UART_IRQ);
     txidle = 1;
 }

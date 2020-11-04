@@ -100,6 +100,7 @@ static void keypress(char ch) {
    is cleared on return from the interrupt handler, but that doesn't
    stop the UART from setting it again. */
 
+#ifdef UBIT
 /* serial_interrupt -- handle serial interrupt */
 static void serial_interrupt(void) {
     if (UART_RXDRDY) {
@@ -116,6 +117,25 @@ static void serial_interrupt(void) {
     clear_pending(UART_IRQ);
     enable_irq(UART_IRQ);
 }
+#endif
+
+#ifdef KL25Z
+/* serial_interrupt -- handle serial interrupt */
+static void serial_interrupt(void) {
+    if (UART0_S1 & BIT(UART_S1_RDRF)) {
+        char ch = UART0_D;
+        keypress(ch);
+    }
+
+    if (UART0_S1 & BIT(UART_S1_TDRE)) {
+        txidle = 1;
+        CLR_BIT(UART0_C2, UART_C2_TIE);
+    }
+
+    clear_pending(UART0_IRQ);
+    enable_irq(UART0_IRQ);
+}
+#endif
 
 /* reply -- send reply or start transmitter if possible */
 static void reply(void) {
@@ -132,7 +152,13 @@ static void reply(void) {
 
     // Can we start transmitting a character?
     if (txidle && n_tx > 0) {
+#ifdef UBIT
         UART_TXD = txbuf[tx_outp];
+#endif
+#ifdef KL25Z
+        UART0_D = txbuf[tx_outp];
+        SET_BIT(UART0_C2, UART_C2_TIE);
+#endif
         tx_outp = wrap(tx_outp+1);
         n_tx--;
         txidle = 0;
@@ -145,6 +171,7 @@ static void serial_task(int n) {
     int client;
     char ch;
 
+#ifdef UBIT
     UART_ENABLE = 0;
 
     GPIO_DIRSET = BIT(TX);
@@ -164,6 +191,39 @@ static void serial_task(int n) {
 
     UART_INTENSET = BIT(UART_INT_RXDRDY) | BIT(UART_INT_TXDRDY);
     connect(UART_IRQ);
+#endif
+
+#ifdef KL25Z
+    // enable PLL clock
+    SET_FIELD(SIM_SOPT2, SIM_SOPT2_UART0SRC, SIM_SOPT2_SRC_PLL);
+    SET_BIT(SIM_SCGC4, SIM_SCGC4_UART0);
+    
+    // Disable UART before changing registers
+    UART0_C2 &= ~(BIT(UART_C2_RE) | BIT(UART_C2_TE));
+    
+    // set baud rate
+    unsigned BR = UART_BAUD_9600;
+    SET_FIELD(UART0_BDH, UART_BDH_SBR, BR >> 8);
+    UART0_BDL = BR & 0xff;
+
+    // 8N1 format
+    UART0_C1 = 0;
+    CLR_BIT(UART0_BDH, UART_BDH_SBNS);
+
+    // set mux for rx/tx pins and enable PullUp mode
+    pin_function(USB_TX, 2);
+    pin_mode(USB_TX, PORT_MODE_PullUp);
+
+    pin_function(USB_RX, 2);
+    pin_mode(USB_RX, PORT_MODE_PullUp);
+
+    // Enable UART
+    UART0_C2 |= BIT(UART_C2_RE) | BIT(UART_C2_TE);
+
+    SET_BIT(UART0_C2, UART_C2_RIE);
+    enable_irq(UART0_IRQ);
+    connect(UART0_IRQ);
+#endif
 
     txidle = 1;
 

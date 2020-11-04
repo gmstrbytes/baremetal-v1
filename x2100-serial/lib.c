@@ -7,45 +7,45 @@
 
 /* utoa -- convert unsigned to decimal or hex */
 static char *utoa(unsigned x, unsigned base, char *nbuf) {
-     char *p = &nbuf[NMAX];
-     const char *hex = "0123456789abcdef";
+    char *p = &nbuf[NMAX];
+    const char *hex = "0123456789abcdef";
 
-     *--p = '\0';
-     do {
-          *--p = hex[x % base];
-          x = x / base;
-     } while (x != 0);
+    *--p = '\0';
+    do {
+        *--p = hex[x % base];
+        x = x / base;
+    } while (x != 0);
      
-     return p;
+    return p;
 }
 
 /* itoa -- convert signed integer to decimal */
 static char *itoa(int v, char *nbuf) {
-     if (v >= 0)
-          return utoa(v, 10, nbuf);
-     else {
-          char *p = utoa(-v, 10, nbuf);
-          *--p = '-';
-          return p;
-     }
+    if (v >= 0)
+        return utoa(v, 10, nbuf);
+    else {
+        char *p = utoa(-v, 10, nbuf);
+        *--p = '-';
+        return p;
+    }
 }
 
 /* atoi -- convert decimal string to integer */
 int atoi(const char *p) {
-     unsigned x = 0;
-     int minus = 0;
+    unsigned x = 0;
+    int minus = 0;
 
-     if (*p == '-') {
-         minus = 1; p++;
-     }
+    if (*p == '-') {
+        minus = 1; p++;
+    }
 
-     while (*p >= '0' && *p <= '9')
-          x = 10 * x + (*p++ - '0');
+    while (*p >= '0' && *p <= '9')
+        x = 10 * x + (*p++ - '0');
 
-     if (minus)
-         return -x;
-     else
-         return x;
+    if (minus)
+        return -x;
+    else
+        return x;
 }
 
 /* xtou -- convert hex string to unsigned */
@@ -72,8 +72,8 @@ unsigned xtou(char *p) {
 
 /* do_string -- output or buffer each character of a string */
 static void do_string(void (*putc)(void *, char), void *q, char *str) {
-     for (char *p = str; *p != '\0'; p++)
-          putc(q, *p);
+    for (char *p = str; *p != '\0'; p++)
+        putc(q, *p);
 }
 
 /* _do_print -- the guts of printf */
@@ -135,7 +135,7 @@ void do_print(void (*putc)(char), const char *fmt, va_list va) {
 
 /* sprintf -- print to a character array */
 int sprintf(char *buf, const char *fmt, ...) {
-     // Note the usual problem with buffer overflow
+    // Note the usual problem with buffer overflow
     char *p = buf;
     va_list va;
     va_start(va, fmt);

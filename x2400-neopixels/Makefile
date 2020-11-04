@@ -30,7 +30,7 @@ SORRY = echo "Please say 'make $@.hex' to compile the '$@' program"
 %: %.o; @$(SORRY)
 
 clean:
-	rm -f *.hex *.elf *.map *.o test-*
+	rm -f *.hex *.elf *.map *.o
 
 # Don't delete intermediate files
 .SECONDARY:

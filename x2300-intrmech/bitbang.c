@@ -14,7 +14,6 @@ void rng_init(void) {
     SET_BIT(RNG_CONFIG, RNG_CONFIG_DERCEN);
     RNG_VALRDY = 0;
     RNG_INTENSET = BIT(RNG_INT_VALRDY);
-    irq_priority(RNG_IRQ, 255);
     enable_irq(RNG_IRQ);
     RNG_START = 1;
 }
@@ -24,10 +23,6 @@ void rng_handler(void) {
     if (RNG_VALRDY) {
         /* Just acknowledge the interrupt */
         RNG_VALRDY = 0;
-
-        /* Pulse on pad1 for triggering */
-        GPIO_OUTSET = BIT(PAD1);
-        GPIO_OUTCLR = BIT(PAD1);
     }
 }
 
@@ -73,7 +68,7 @@ void init(void) {
 
     while (1) {
         GPIO_OUT = 0x5fb0;
-        // nop(); nop(); nop();
+        nop(); nop(); nop();
         GPIO_OUT = 0;
     }
 }

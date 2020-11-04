@@ -50,6 +50,9 @@ static unsigned char *__break2 = __stack_limit;
 #define ROUNDUP(x, n)  (((x)+(n)-1) & ~((n)-1))
 
 static void *sbrk(int inc) {
+    __break = (unsigned char *) ROUNDUP((unsigned) __break, 8);
+    inc = ROUNDUP(inc, 8);
+
     if (inc > __break2 - __break)
         panic("Phos is out of memory");
     void *result = __break;
@@ -400,15 +403,18 @@ void os_init(void) {
     idle_proc->p_priority = P_IDLE;
 }
 
+#define MAGIC 0xfffffffd        /* Magic value for exception return */
 #define INIT_PSR 0x01000000     /* Thumb bit is set */
 
 // These match the frame layout in mpx.s, and the hardware
-#define R0_SAVE 8
-#define R1_SAVE 9
-#define R2_SAVE 10
-#define LR_SAVE 13
-#define PC_SAVE 14
-#define PSR_SAVE 15
+#define ERV_SAVE 0 // Offset for magic return value
+#define R0_SAVE 9
+#define R1_SAVE 10
+#define R2_SAVE 11
+#define LR_SAVE 14
+#define PC_SAVE 15
+#define PSR_SAVE 16
+#define FRAME_WORDS 17
 
 #define roundup(x, n) (((x) + ((n)-1)) & ~((n)-1))
 
@@ -420,12 +426,13 @@ int start(char *name, void (*body)(int), int arg, int stksize) {
         panic("start() called after scheduler startup");
 
     /* Fake an exception frame */
-    unsigned *sp = p->p_sp - 16;
-    memset(sp, 0, 64);
+    unsigned *sp = p->p_sp - FRAME_WORDS;
+    memset(sp, 0, 4*FRAME_WORDS);
     sp[PSR_SAVE] = INIT_PSR;
     sp[PC_SAVE] = (unsigned) body & ~0x1; // Activate the process body
     sp[LR_SAVE] = (unsigned) exit; // Make it return to exit()
     sp[R0_SAVE] = (unsigned) arg;  // Pass the supplied argument in R0
+    sp[ERV_SAVE] = MAGIC;
     p->p_sp = sp;
 
     make_ready(p, p->p_priority);
@@ -531,27 +538,27 @@ unsigned *cxt_switch(unsigned *psp) {
 #define NOINLINE __attribute((noinline))
 
 void NOINLINE yield(void) {
-     syscall(SYS_YIELD);
+    syscall(SYS_YIELD);
 }
 
 void NOINLINE send(int dest, int type, message *msg) {
-     syscall(SYS_SEND);
+    syscall(SYS_SEND);
 }
 
 void NOINLINE receive(int type, message *msg) {
-     syscall(SYS_RECEIVE);
+    syscall(SYS_RECEIVE);
 }
 
 void NOINLINE sendrec(int dest, int type, message *msg) {
-     syscall(SYS_SENDREC);
+    syscall(SYS_SENDREC);
 }
 
 void NOINLINE exit(void) {
-     syscall(SYS_EXIT);
+    syscall(SYS_EXIT);
 }
 
 void NOINLINE dump(void) {
-     syscall(SYS_DUMP);
+    syscall(SYS_DUMP);
 }
 
 
@@ -643,5 +650,5 @@ void panic(char *fmt, ...) {
 
 /* badmesg -- default case for switches on message type */
 void badmesg(int type) {
-     panic("Bad message type %d", type);
+    panic("Bad message type %d", type);
 }

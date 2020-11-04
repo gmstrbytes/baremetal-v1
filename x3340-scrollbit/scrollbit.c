@@ -12,9 +12,9 @@
 #include <string.h>
 
 void i2c_write_buf(int addr, int cmd, byte *buf2, int n) {
-     byte buf1 = cmd;
-     int status = i2c_xfer(WRITE, addr, &buf1, 1, buf2, n);
-     assert(status == OK);
+    byte buf1 = cmd;
+    int status = i2c_xfer(WRITE, addr, &buf1, 1, buf2, n);
+    assert(status == OK);
 }
 
 #define CHARWD 6
@@ -51,39 +51,39 @@ static const byte map[CHARHT][DISPWD] = {
 static byte imgbuf[144];
 
 static void show(void) {
-     static int frame = 0;
-     i2c_write_reg(I2C_ADDR, REG_BANK, frame);
-     i2c_write_buf(I2C_ADDR, REG_COLOR, imgbuf, 144);
-     i2c_write_reg(I2C_ADDR, REG_BANK, BANK_CONFIG);
-     i2c_write_reg(I2C_ADDR, REG_FRAME, frame);
-     frame = 1-frame;
+    static int frame = 0;
+    i2c_write_reg(I2C_ADDR, REG_BANK, frame);
+    i2c_write_buf(I2C_ADDR, REG_COLOR, imgbuf, 144);
+    i2c_write_reg(I2C_ADDR, REG_BANK, BANK_CONFIG);
+    i2c_write_reg(I2C_ADDR, REG_FRAME, frame);
+    frame = 1-frame;
 }
 
 static void init_display(void) {
-     i2c_write_reg(I2C_ADDR, REG_BANK, BANK_CONFIG);
-     timer_delay(1);
-     i2c_write_reg(I2C_ADDR, REG_SHUTDOWN, 0);
-     timer_delay(1);
-     i2c_write_reg(I2C_ADDR, REG_SHUTDOWN, 1);
-     timer_delay(1);
-     i2c_write_reg(I2C_ADDR, REG_MODE, 0);
-     i2c_write_reg(I2C_ADDR, REG_AUDIOSYNC, 0);
+    i2c_write_reg(I2C_ADDR, REG_BANK, BANK_CONFIG);
+    timer_delay(1);
+    i2c_write_reg(I2C_ADDR, REG_SHUTDOWN, 0);
+    timer_delay(1);
+    i2c_write_reg(I2C_ADDR, REG_SHUTDOWN, 1);
+    timer_delay(1);
+    i2c_write_reg(I2C_ADDR, REG_MODE, 0);
+    i2c_write_reg(I2C_ADDR, REG_AUDIOSYNC, 0);
 
-     // Enable each LED: unwired LEDs must be disabled for Charlieplexing.
-     memset(imgbuf, 0x7f, 17);  // LEDs 0-6, 8-14, ..., 128-134 on
-     imgbuf[17] = 0;            // LEDs 136-143 off
-     i2c_write_reg(I2C_ADDR, REG_BANK, 0);
-     i2c_write_buf(I2C_ADDR, REG_ENABLE, imgbuf, 18);
-     i2c_write_reg(I2C_ADDR, REG_BANK, 1);
-     i2c_write_buf(I2C_ADDR, REG_ENABLE, imgbuf, 18);
+    // Enable each LED: unwired LEDs must be disabled for Charlieplexing.
+    memset(imgbuf, 0x7f, 17);  // LEDs 0-6, 8-14, ..., 128-134 on
+    imgbuf[17] = 0;            // LEDs 136-143 off
+    i2c_write_reg(I2C_ADDR, REG_BANK, 0);
+    i2c_write_buf(I2C_ADDR, REG_ENABLE, imgbuf, 18);
+    i2c_write_reg(I2C_ADDR, REG_BANK, 1);
+    i2c_write_buf(I2C_ADDR, REG_ENABLE, imgbuf, 18);
 
-     // Disable blinking for each LED and blank the display
-     memset(imgbuf, 0, 144);
-     i2c_write_reg(I2C_ADDR, REG_BANK, 0);
-     i2c_write_buf(I2C_ADDR, REG_BLINK, imgbuf, 18);
-     i2c_write_reg(I2C_ADDR, REG_BANK, 1);
-     i2c_write_buf(I2C_ADDR, REG_BLINK, imgbuf, 18);
-     show();
+    // Disable blinking for each LED and blank the display
+    memset(imgbuf, 0, 144);
+    i2c_write_reg(I2C_ADDR, REG_BANK, 0);
+    i2c_write_buf(I2C_ADDR, REG_BLINK, imgbuf, 18);
+    i2c_write_reg(I2C_ADDR, REG_BANK, 1);
+    i2c_write_buf(I2C_ADDR, REG_BLINK, imgbuf, 18);
+    show();
 }
 
 #define DISPMAX 1024
@@ -184,14 +184,14 @@ void input_task(int dummy) {
             m.m_p1 = buf;
             sendrec(STORE, WRITE, &m);
         }
-     }
+    }
 }
 
 void init(void) {
-     timer_init();
-     i2c_init();
-     serial_init();
-     SCROLL = start("Scroll", scroll_task, 0, STACK);
-     STORE = start("Store", store_task, 0, STACK);
-     INPUT = start("Input", input_task, 0, STACK);
+    timer_init();
+    i2c_init();
+    serial_init();
+    SCROLL = start("Scroll", scroll_task, 0, STACK);
+    STORE = start("Store", store_task, 0, STACK);
+    INPUT = start("Input", input_task, 0, STACK);
 }

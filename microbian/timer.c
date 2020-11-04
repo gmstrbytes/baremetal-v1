@@ -8,6 +8,8 @@
 
 #define MAX_TIMERS 8
 
+static int TIMER;
+
 /* Millis will overflow in about 46 days, but that's long enough. */
 
 static unsigned millis = 0;
@@ -55,12 +57,13 @@ static void create(int client, int delay, int repeat) {
         timer[i].period = 0;
 }
 
-/* We use Timer 1 because its 16-bit mode is adequate for a clock with
-   up to 1us resulution and 1ms period, leaving the 32-bit Timer 0 for
-   other purposes. */
-
 void timer_task(int n) {
     message m;
+
+#ifdef UBIT
+    /* We use Timer 1 because its 16-bit mode is adequate for a clock
+       with up to 1us resulution and 1ms period, leaving the 32-bit
+       Timer 0 for other purposes. */
 
     TIMER1_STOP = 1;
     TIMER1_MODE = TIMER_MODE_Timer;
@@ -73,12 +76,24 @@ void timer_task(int n) {
     TIMER1_START = 1;
 
     connect(TIMER1_IRQ);
+#endif
+
+#ifdef KL25Z
+    /* Use the Systick timer.  On KL25, we can set it to use the
+       'external' clock which is the system clock scaled by 16, so 3MHz. */
+
+    SYST_CSR = BIT(SYST_CSR_TICKINT);
+    SYST_CVR = 0;
+    SYST_RVR = 3000 * TICK;
+    SET_BIT(SYST_CSR, SYST_CSR_ENABLE);
+#endif
 
     while (1) {
         receive(ANY, &m);
 
         switch (m.m_type) {
         case INTERRUPT:
+#ifdef UBIT
             if (TIMER1_COMPARE[0]) {
                 millis += TICK;
                 TIMER1_COMPARE[0] = 0;
@@ -87,6 +102,13 @@ void timer_task(int n) {
             clear_pending(TIMER1_IRQ);
             enable_irq(TIMER1_IRQ);
             break;
+#endif
+
+#ifdef KL25Z
+            millis += TICK;
+            check_timers();
+            break;
+#endif
 
         case REGISTER:
             create(m.m_sender, m.m_i1, m.m_i2);

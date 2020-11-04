@@ -35,10 +35,10 @@ unsigned getB(unsigned rgb) { return rgb & 0xff; }
 
 /* interp -- interpolate between two colours */
 unsigned interp(int i, unsigned x, unsigned y) {
-     int r = (ISTEP-i) * getR(x) + i * getR(y);
-     int g = (ISTEP-i) * getG(x) + i * getG(y);
-     int b = (ISTEP-i) * getB(x) + i * getB(y);
-     return RGB(r>>5, g>>5, b>>5);
+    int r = (ISTEP-i) * getR(x) + i * getR(y);
+    int g = (ISTEP-i) * getG(x) + i * getG(y);
+    int b = (ISTEP-i) * getB(x) + i * getB(y);
+    return RGB(r>>5, g>>5, b>>5);
 }
 
 #define INTEN 31
@@ -67,27 +67,27 @@ unsigned pix[NPIX];
 
 /* init -- main program */
 void init(void) {
-     int u = 0;
+    int u = 0;
 
-     // Set up pin NEO for output
-     GPIO_OUT = 0;
-     GPIO_DIRSET = BIT(NEO);
+    // Set up pin NEO for output
+    GPIO_OUT = 0;
+    GPIO_DIRSET = BIT(NEO);
 
-     // Initialise to all pixels off
-     neoframe(NEO, pix, NPIX);
+    // Initialise to all pixels off
+    neoframe(NEO, pix, NPIX);
 
-     while (1) {
-         // Compute shifted rainbow pattern
-         for (int i = 0; i < NPIX; i++)
-             pix[i] = hue(u + STEP * i);
+    while (1) {
+        // Compute shifted rainbow pattern
+        for (int i = 0; i < NPIX; i++)
+            pix[i] = hue(u + STEP * i);
 
-         // Display it
-         neoframe(NEO, pix, NPIX);
+        // Display it
+        neoframe(NEO, pix, NPIX);
 
-         // Shift next frame a bit further
-         u++;
+        // Shift next frame a bit further
+        u++;
 
-         // Delay before next frame
-         delay(100000);
-     }
+        // Delay before next frame
+        delay(100000);
+    }
 }

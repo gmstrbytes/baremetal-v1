@@ -19,7 +19,7 @@ void os_interrupt(int irq);
 
 /* Addresses set by the linker */
 extern unsigned char __data_start[], __data_end[],
-     __bss_start[], __bss_end[], __etext[], __stack[];
+    __bss_start[], __bss_end[], __etext[], __stack[];
 
 /* The next four routines can be used in C compiler output, even
    if not mentioned in the source. */
@@ -64,26 +64,26 @@ int memcmp(const void *pp, const void *qq, int n) {
 
 /* __reset -- the system starts here */
 void __reset(void) {
-     // Make sure all RAM banks are powered on.
-     POWER_RAMON |= BIT(0) | BIT(1);
+    // Make sure all RAM banks are powered on.
+    POWER_RAMON |= BIT(0) | BIT(1);
 
-     // Activate the crystal clock
-     CLOCK_XTALFREQ = CLOCK_XTALFREQ_16MHz;
-     CLOCK_HFCLKSTARTED = 0;
-     CLOCK_HFCLKSTART = 1;
-     while (! CLOCK_HFCLKSTARTED) { }
+    // Activate the crystal clock
+    CLOCK_XTALFREQ = CLOCK_XTALFREQ_16MHz;
+    CLOCK_HFCLKSTARTED = 0;
+    CLOCK_HFCLKSTART = 1;
+    while (! CLOCK_HFCLKSTARTED) { }
 
-     // Copy data segment and zero out bss.
-     memcpy(__data_start, __etext, __data_end - __data_start);
-     memset(__bss_start, 0, __bss_end - __bss_start);
+    // Copy data segment and zero out bss.
+    memcpy(__data_start, __etext, __data_end - __data_start);
+    memset(__bss_start, 0, __bss_end - __bss_start);
 
 #ifdef MICROBIAN
-     os_init();                 // Initialise the scheduler.
-     init();                    // Let the program initialise itself.
-     os_start();                // Start the scheduler -- never returns.
+    os_init();                 // Initialise the scheduler.
+    init();                    // Let the program initialise itself.
+    os_start();                // Start the scheduler -- never returns.
 #else
-     init();                    // Call the main program.
-     while (1) pause();         // Halt if it returns.
+    init();                    // Call the main program.
+    while (1) pause();         // Halt if it returns.
 #endif
 }
 
@@ -96,10 +96,10 @@ void __reset(void) {
 
 /* irq_priority -- set priority for an IRQ to a value [0..255] */
 void irq_priority(int irq, unsigned prio) {
-     if (irq < 0)
-         SET_BYTE(SCB_SHPR[(irq+8) >> 2], irq & 0x3, prio);
-     else
-         SET_BYTE(NVIC_IPR[irq >> 2], irq & 0x3, prio);
+    if (irq < 0)
+        SET_BYTE(SCB_SHPR[(irq+8) >> 2], irq & 0x3, prio);
+    else
+        SET_BYTE(NVIC_IPR[irq >> 2], irq & 0x3, prio);
 }
      
 // See hardware.h for macros enable_irq, disable_irq, clear_pending, reschedule
@@ -107,37 +107,31 @@ void irq_priority(int irq, unsigned prio) {
 
 /*  INTERRUPT VECTORS */
 
-/* We use GCC features to define each handler name as an alias for the
-   spin() function if it is not defined elsewhere, or for the general
-   interrupt handler of Phos.  Applications can subsitute their own
-   definitions for individual handler names like uart_handler(). */
+/* We use the linker script to define each handler name as an alias
+   for default_handler if it is not defined elsewhere.  Applications
+   can subsitute their own definitions for individual handler names
+   like uart_handler(). */
 
 /* spin -- show Seven Stars of Death */
 void spin(void) {
-     int n;
+    int n;
 
-     intr_disable();
+    intr_disable();
 
-     GPIO_DIR = 0xfff0;
-     while (1) {
-          GPIO_OUT = 0x4000;
-          for (n = 1000000; n > 0; n--) {
-               nop(); nop(); nop();
-          }
-          GPIO_OUT = 0;
-          for (n = 200000; n > 0; n--) {
-               nop(); nop(); nop();
-          }
-     }          
+    GPIO_DIR = 0xfff0;
+    while (1) {
+        GPIO_OUT = 0x4000;
+        for (n = 1000000; n > 0; n--) {
+            nop(); nop(); nop();
+        }
+        GPIO_OUT = 0;
+        for (n = 200000; n > 0; n--) {
+            nop(); nop(); nop();
+        }
+    }          
 }
 
-void default_handler(void);
-
-#ifndef MICROBIAN
-void default_handler(void) {
-    spin();
-}
-#endif
+void default_handler(void) __attribute((weak, alias("spin")));
 
 // The linker script makes all these handlers into weak aliases for
 // default_handler.

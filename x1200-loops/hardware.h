@@ -1,6 +1,7 @@
 // common/hardware.h
 // Copyright (c) 2018-20 J. M. Spivey
 
+#define UBIT 1
 #define UBIT_V1 1
 
 /* Hardware register definitions for nRF51822 */
@@ -9,7 +10,7 @@
 #define SET_BIT(reg, n) reg |= BIT(n)
 #define CLR_BIT(reg, n) reg &= ~BIT(n)
 #define SET_BYTE(reg, n, v) \
-     reg = (reg & ~(0xff << 8*n)) | ((v & 0xff) << 8*n)
+    reg = (reg & ~(0xff << 8*n)) | ((v & 0xff) << 8*n)
 
 /* The macros SET_FIELD, etc., are defined in an indirect way that
 permits (because of the timing of CPP macro expansion) the 'field'
@@ -95,21 +96,21 @@ argument to be a macro that expands the a 'position, width' pair. */
 #define RNG_IRQ    13
 
 /* System registers */
-#define SCB_CPUID               ADDR(0xE000ED00)
-#define SCB_ICSR                ADDR(0xE000ED04)
+#define SCB_CPUID               ADDR(0xe000ed00)
+#define SCB_ICSR                ADDR(0xe000ed04)
 #define   SCB_ICSR_PENDSVSET 28
 #define   SCB_ICSR_VECTACTIVE 0, 6
-#define SCB_SCR                 ADDR(0xE000ED10)
+#define SCB_SCR                 ADDR(0xe000ed10)
 #define   SCB_SCR_SLEEPONEXIT 1
 #define   SCB_SCR_SLEEPDEEP 2
 #define   SCB_SCR_SEVONPEND 4
-#define SCB_SHPR               ARRAY(0xE000ED1C)
+#define SCB_SHPR               ARRAY(0xe000ed1c)
 
-#define NVIC_ISER              ARRAY(0xE000E100)
-#define NVIC_ICER              ARRAY(0xE000E180)
-#define NVIC_ISPR              ARRAY(0xE000E200)
-#define NVIC_ICPR              ARRAY(0xE000E280)
-#define NVIC_IPR               ARRAY(0xE000E400)
+#define NVIC_ISER              ARRAY(0xe000e100)
+#define NVIC_ICER              ARRAY(0xe000e180)
+#define NVIC_ISPR              ARRAY(0xe000e200)
+#define NVIC_ICPR              ARRAY(0xe000e280)
+#define NVIC_IPR               ARRAY(0xe000e400)
 
 #define POWER_RAMON             ADDR(0x40000524)
 

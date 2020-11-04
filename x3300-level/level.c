@@ -19,33 +19,33 @@ static const int ledval[][5] = {
 
 /* scale -- map acceleration to coordinate */
 static int scale(int x) {
-     if (x < -20) return 4;
-     if (x < -10) return 3;
-     if (x <= 10) return 2;
-     if (x <= 20) return 1;
-     return 0;
+    if (x < -20) return 4;
+    if (x < -10) return 3;
+    if (x <= 10) return 2;
+    if (x <= 20) return 1;
+    return 0;
 }
 
 /* main_task -- show the spirit level */
 static void main(int n) {
     int x, y, z;
 
-     printf("Hello\n\n");
-     accel_start();
-     GPIO_DIR = 0xfff0;
+    printf("Hello\n\n");
+    accel_start();
+    GPIO_DIR = 0xfff0;
 
-     while (1) {
-          timer_delay(200);
-          accel_reading(&x, &y, &z);
-          printf("x=%d y=%d z=%d\n", x, y, z);
-          x = scale(x); y = scale(y);
-          GPIO_OUT = ledval[y][x];
-     }
+    while (1) {
+        timer_delay(200);
+        accel_reading(&x, &y, &z);
+        printf("x=%d y=%d z=%d\n", x, y, z);
+        x = scale(x); y = scale(y);
+        GPIO_OUT = ledval[y][x];
+    }
 }
 
 void init(void) {
-     serial_init();
-     timer_init();
-     i2c_init();
-     start("Main", main, 0, STACK);
+    serial_init();
+    timer_init();
+    i2c_init();
+    start("Main", main, 0, STACK);
 }
