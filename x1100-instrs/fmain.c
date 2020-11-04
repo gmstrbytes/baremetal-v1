@@ -157,7 +157,7 @@ void init(void) {
     printf("\nHello micro:world!\n\n");
 
 #ifdef UBIT
-    GPIO_DIRSET = ROW_MASK | COL_MASK;
+    GPIO_DIRSET = 0xfff0;
 
     // Set up TIMER0 in 32 bit mode
     TIMER0_MODE = TIMER_MODE_Timer;
