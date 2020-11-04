@@ -19,7 +19,7 @@ OBJCOPY = arm-none-eabi-objcopy
 
 # Use ld for linking to help with the explanation
 %.elf: %.o fmain.o lib.o startup.o
-	$(LD) -T NRF51822.ld $^ \
+	$(LD) -T nRF51822.ld $^ \
 		$(LIBGCC) -o $@ -Map $*.map
 	$(SIZE) $@
 

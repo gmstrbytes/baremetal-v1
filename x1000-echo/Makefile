@@ -15,7 +15,7 @@ OBJCOPY = arm-none-eabi-objcopy
 
 # Use ld for linking to help with the explanation
 %.elf: %.o startup.o
-	$(LD) -T NRF51822.ld $^ -o $@ -Map $*.map
+	$(LD) -T nRF51822.ld $^ -o $@ -Map $*.map
 	$(SIZE) $@
 
 %.hex: %.elf
