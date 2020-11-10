@@ -583,17 +583,16 @@ static void kprintf_setup(void) {
     delay_usec(2000);
 
     // Reconfigure the UART just to be sure
+    GPIO_DIRSET = BIT(TX);
+    GPIO_DIRCLR = BIT(RX);
+    GPIO_OUTSET = BIT(TX);
+
     UART_ENABLE = UART_ENABLE_Disabled;
-
-    GPIO_DIRSET = BIT(USB_TX);
-    GPIO_DIRCLR = BIT(USB_RX);
-    SET_FIELD(GPIO_PINCNF[USB_TX], GPIO_PINCNF_PULL, GPIO_PULL_Pullup);
-    SET_FIELD(GPIO_PINCNF[USB_RX], GPIO_PINCNF_PULL, GPIO_PULL_Pullup);
-
     UART_BAUDRATE = UART_BAUDRATE_9600; // 9600 baud
-    UART_CONFIG = 0;                    // format 8N1
-    UART_PSELTXD = USB_TX;              // choose pins
-    UART_PSELRXD = USB_RX;
+    UART_CONFIG = FIELD(UART_CONFIG_PARITY, UART_PARITY_None);
+                                        // format 8N1
+    UART_PSELTXD = TX;                  // choose pins
+    UART_PSELRXD = RX;
     UART_ENABLE = UART_ENABLE_Enabled;
     UART_STARTTX = 1;
     UART_STARTRX = 1;

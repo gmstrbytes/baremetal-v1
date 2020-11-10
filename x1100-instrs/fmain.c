@@ -5,21 +5,19 @@
 #include "lib.h"
 #include <stdarg.h>
 
-/* Pins to use for serial communication */
-#define TX USB_TX
-#define RX USB_RX
-
 int txinit;              // UART ready to transmit first char
 
 /* serial_init -- set up UART connection to host */
 void serial_init(void) {
+    // When disabled, TX is output high, RX is input
     GPIO_DIRSET = BIT(TX);
     GPIO_DIRCLR = BIT(RX);
-    SET_FIELD(GPIO_PINCNF[TX], GPIO_PINCNF_PULL, GPIO_PULL_Pullup);
-    SET_FIELD(GPIO_PINCNF[RX], GPIO_PINCNF_PULL, GPIO_PULL_Pullup);
+    GPIO_OUTSET = BIT(TX);
 
+    UART_ENABLE = UART_ENABLE_Disabled;
     UART_BAUDRATE = UART_BAUDRATE_9600; // 9600 baud
-    UART_CONFIG = 0;                    // format 8N1
+    UART_CONFIG = FIELD(UART_CONFIG_PARITY, UART_PARITY_None);
+                                        // format 8N1
     UART_PSELTXD = TX;                  // choose pins
     UART_PSELRXD = RX;
     UART_ENABLE = UART_ENABLE_Enabled;
@@ -129,13 +127,21 @@ char *fmt_fixed(unsigned t, unsigned n, int k) {
     return p;
 }
 
-#ifdef UBIT
+#ifdef UBIT_V1
 #define LIGHT 0x5fb0
 
 #define FUDGE 20                // ticks of overhead for function call
 #define MULT 1
 #define DIV 1
-#define RES 25
+#define RES 625
+#define SCALE 4
+#endif
+
+#ifdef UBIT_V2
+#define FUDGE 8                 // ticks of overhead for function call
+#define MULT 4
+#define DIV 1
+#define RES 625
 #define SCALE 4
 #endif
 
@@ -156,9 +162,16 @@ void init(void) {
     serial_init();
     printf("\nHello micro:world!\n\n");
 
-#ifdef UBIT
+#ifdef UBIT_V1
     GPIO_DIRSET = 0xfff0;
+#endif
 
+#ifdef UBIT_V2
+    GPIO0_DIRSET = LED_MASK0;
+    GPIO1_DIRSET = LED_MASK1;
+#endif
+      
+#ifdef UBIT
     // Set up TIMER0 in 32 bit mode
     TIMER0_MODE = TIMER_MODE_Timer;
     TIMER0_BITMODE = TIMER_BITMODE_32Bit;
@@ -183,27 +196,40 @@ void init(void) {
         a = getnum("a = ");
         b = getnum("b = ");
 
-#ifdef UBIT
+#ifdef UBIT_V1
         TIMER0_CLEAR = 1;
-        GPIO_OUT = LIGHT;
+        GPIO_OUTSET = LIGHT;
         c = func(a, b);
-        GPIO_OUT = 0;
+        GPIO_OUTCLR = LIGHT;
         TIMER0_CAPTURE[0] = 1;
-        time = TIMER0_CC[0] - FUDGE;
+        time = TIMER0_CC[0];
+#endif
+        
+#ifdef UBIT_V2
+        TIMER0_CLEAR = 1;
+        GPIO0_OUTSET = LED_DOT0;
+        GPIO1_OUTSET = LED_DOT1;
+        c = func(a, b);
+        GPIO0_OUTCLR = LED_DOT0;
+        GPIO1_OUTCLR = LED_DOT1;
+        TIMER0_CAPTURE[0] = 1;
+        time = TIMER0_CC[0];
 #endif
         
 #ifdef KL25Z
         PIT0_TCTRL = BIT(PIT_TCTRL_TEN);
         pin_value(LED_BLUE, 0);
         c = func(a, b);
-        time = ~PIT0_CVAL - FUDGE;
+        pin_value(LED_BLUE, 0);
+        time = ~PIT0_CVAL;
         PIT0_TCTRL = 0;
 #endif
 
+        time -= FUDGE;
         printf("func(%d, %d) = %d\n", a, b, c);
         printf("func(%x, %x) = %x\n", a, b, c);
         printf("%d cycle%s, %s microsec\n\n",
-               time*MULT, (time == 1 ? "" : "s"),
+               time*MULT, (time*MULT == 1 ? "" : "s"),
                fmt_fixed(time/DIV, RES, SCALE));
     }
 }

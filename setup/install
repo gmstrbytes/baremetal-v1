@@ -1,5 +1,13 @@
 #!/bin/bash
 
+# Setup script for Bare Metal micro:bit.  The tasks:
+# 1. Install raspios packages that are needed.
+# 2. Install enhanced version of Geany.
+# 3. Carefully install a working version of Pyocd.
+# 4. Create a file association for Geany project files.
+# 5. Adjust various preferences.
+# 6. Generate Geany project files for each experiment.
+
 # Make sure the shell is bash.
 if [ x$BASH_VERSION = x ]; then exec /bin/bash $0; fi
 
@@ -27,7 +35,7 @@ sudo apt-get -y install \
      gcc-arm-none-eabi gdb-arm-none-eabi \
      pulseview sigrok-firmware-fx2lafw \
      minicom geany geany-plugin-projectorganizer \
-     openocd python3
+     python3-pip
 echo
 
 vers=$(dpkg-query -W -f '${Version}\n' geany)
@@ -43,6 +51,26 @@ else
     done
     sudo dpkg -i $pkgs
 fi
+echo
+
+# The Python module cmsis-pack-manager can't be installed on Raspberry
+# Pi, because it depends on a back-end written in Rust for which no
+# binary package is available, and an attempt to compile it fails for
+# lack of memory.  Pyocd works fine without it; the target interfaces
+# we need are already included.
+
+echo "*** Installing pyocd"
+tmp=/tmp/pyocd-$$
+# Install pyocd itself without deps
+sudo pip3 install --no-deps pyocd
+# Nuke the dependency on cmsis-pack-manager
+sudo sed -i '/^Requires-Dist: cmsis-pack-manager/d' \
+     /usr/local/lib/python3.*/dist-packages/pyocd-*.dist-info/METADATA
+# Collect other dependencies
+sed -n '/^Requires-Dist: \([^;]*\)$/s//\1/p' \
+    /usr/local/lib/python3.*/dist-packages/pyocd-*.dist-info/METADATA >$tmp
+# Install those dependencies
+sudo pip3 install -r $tmp
 echo
 
 echo "*** Associating project files with Geany"
@@ -104,4 +132,4 @@ echo "*** Generating Geany project files"
 /bin/bash genproj
 echo
 
-echo "*** Done!"
+echo "*** Done! Please reboot."

@@ -64,9 +64,6 @@ int memcmp(const void *pp, const void *qq, int n) {
 
 /* __reset -- the system starts here */
 void __reset(void) {
-    // Make sure all RAM banks are powered on.
-    POWER_RAMON |= BIT(0) | BIT(1);
-
     // Activate the crystal clock
     CLOCK_XTALFREQ = CLOCK_XTALFREQ_16MHz;
     CLOCK_HFCLKSTARTED = 0;
@@ -121,11 +118,11 @@ void spin(void) {
     GPIO_DIR = 0xfff0;
     while (1) {
         GPIO_OUT = 0x4000;
-        for (n = 1000000; n > 0; n--) {
+        for (n = 1000000; n > 0; n--) { // 500nsec per iteration, 0.5s total
             nop(); nop(); nop();
         }
         GPIO_OUT = 0;
-        for (n = 200000; n > 0; n--) {
+        for (n = 200000; n > 0; n--) { // 0.1s delay
             nop(); nop(); nop();
         }
     }          
@@ -168,25 +165,23 @@ void swi4_handler(void);
 void swi5_handler(void);
 
 // This vector table is placed at address 0 in the flash by directives
-// in the linker script.  Entries directly filled with default_handler
-// are unused by the hardware.  Getting such an interrupt would be a
-// real surprise!
+// in the linker script.
 
 void *__vectors[] __attribute((section(".vectors"))) = {
     __stack,                    // -16
     __reset,
     nmi_handler,
     hardfault_handler,
-    default_handler,            // -12
-    default_handler,
-    default_handler,
-    default_handler,
-    default_handler,            //  -8
-    default_handler,
-    default_handler,
+    0,                          // -12
+    0,
+    0,
+    0,
+    0,                          //  -8
+    0,
+    0,
     svc_handler,
-    default_handler,            // -4
-    default_handler,
+    0,                          // -4
+    0,
     pendsv_handler,
     systick_handler,
     
@@ -196,7 +191,7 @@ void *__vectors[] __attribute((section(".vectors"))) = {
     uart_handler,
     spi0_twi0_handler,
     spi1_twi1_handler,          //  4
-    default_handler,
+    0,
     gpiote_handler,
     adc_handler,
     timer0_handler,             //  8
@@ -217,10 +212,10 @@ void *__vectors[] __attribute((section(".vectors"))) = {
     swi3_handler,
     swi4_handler,               // 24
     swi5_handler,
-    default_handler,
-    default_handler,
-    default_handler,            // 28
-    default_handler,
-    default_handler,
-    default_handler
+    0,
+    0,
+    0,                          // 28
+    0,
+    0,
+    0
 };

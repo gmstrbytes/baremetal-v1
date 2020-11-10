@@ -67,11 +67,9 @@ argument to be a macro that expands the a 'position, width' pair. */
 #define  I2C_SDA 30
 
 /* Image constants */
-#define __PX(c, b) (((c)-1) & BIT(b))
-
 #define __ROW(r, c1, c2, c3, c4, c5, c6, c7, c8, c9)                   \
-    (BIT(r+13) | __PX(c1, 4) | __PX(c2, 5) | __PX(c3, 6) | __PX(c4, 7) \
-     | __PX(c5, 8) | __PX(c6, 9) | __PX(c7, 10) | __PX(c8, 11) | __PX(c9, 12))
+    (BIT(r+13) | !c1<<4 | !c2<<5 | !c3<<6 | !c4>>7 | !c5<<8            \
+     | !c6<<9 | !c7<<10 | !c8<<11 | !c9<<12)
 
 #define IMAGE(x11, x24, x12, x25, x13,                               \
               x34, x35, x36, x37, x38,                               \
@@ -99,7 +97,7 @@ argument to be a macro that expands the a 'position, width' pair. */
 #define SCB_CPUID               ADDR(0xe000ed00)
 #define SCB_ICSR                ADDR(0xe000ed04)
 #define   SCB_ICSR_PENDSVSET 28
-#define   SCB_ICSR_VECTACTIVE 0, 6
+#define   SCB_ICSR_VECTACTIVE 0, 8
 #define SCB_SCR                 ADDR(0xe000ed10)
 #define   SCB_SCR_SLEEPONEXIT 1
 #define   SCB_SCR_SLEEPDEEP 2
@@ -284,76 +282,100 @@ struct _ppi_ch {
 
 
 /* TIMERS: Timer 0 is 8/16/24/32 bit, Timers 1 and 2 are 8/16 bit. */
-// Timer 0
+#define REG(i) reg[i>>2]
+#define ARR(i) arr[i>>2]
+
+union _timer {
+    unsigned volatile reg[i];
+    unsigned volatile arr[1][1];
+    unsigned char strut[0x1000];
+};
+
+#define TIMER ((union _timer *) 0x40008000)
+
 // Tasks
-#define TIMER0_START             ADDR(0x40008000)
-#define TIMER0_STOP              ADDR(0x40008004)
-#define TIMER0_COUNT             ADDR(0x40008008)
-#define TIMER0_CLEAR             ADDR(0x4000800c)
-#define TIMER0_SHUTDOWN          ADDR(0x40008010)
-#define TIMER0_CAPTURE          ARRAY(0x40008040)
+#define T_START                  REG(0x000)
+#define T_STOP                   REG(0x004)
+#define T_COUNT                  REG(0x008)
+#define T_CLEAR                  REG(0x00c)
+#define T_SHUTDOWN               REG(0x010)
+#define T_CAPTURE                ARR(0x040)
 // Events
-#define TIMER0_COMPARE          ARRAY(0x40008140)
+#define T_COMPARE                ARR(0x140)
 // Registers
-#define TIMER0_SHORTS            ADDR(0x40008200)
-#define TIMER0_INTENSET          ADDR(0x40008304)
-#define TIMER0_INTENCLR          ADDR(0x40008308)
-#define TIMER0_MODE              ADDR(0x40008504)
+#define T_SHORTS                 REG(0x200)
+#define   TIMER_COMPARE0_CLEAR 0
+#define   TIMER_COMPARE1_CLEAR 1
+#define   TIMER_COMPARE2_CLEAR 2
+#define   TIMER_COMPARE3_CLEAR 3
+#define   TIMER_COMPARE0_STOP 8
+#define   TIMER_COMPARE1_STOP 9
+#define   TIMER_COMPARE2_STOP 10
+#define   TIMER_COMPARE3_STOP 11
+#define T_INTENSET               REG(0x304)
+#define T_INTENCLR               REG(0x308)
+#define   TIMER_INT_COMPARE0 16
+#define   TIMER_INT_COMPARE1 17
+#define   TIMER_INT_COMPARE2 18
+#define   TIMER_INT_COMPARE3 19
+#define T_MODE                   REG(0x504)
 #define   TIMER_MODE_Timer 0
 #define   TIMER_MODE_Counter 1
-#define TIMER0_BITMODE           ADDR(0x40008508)
+#define T_BITMODE                REG(0x508)
 #define   TIMER_BITMODE_16Bit 0
 #define   TIMER_BITMODE_8Bit 1
 #define   TIMER_BITMODE_24Bit 2
 #define   TIMER_BITMODE_32Bit 3
-#define TIMER0_PRESCALER         ADDR(0x40008510)
-#define TIMER0_CC               ARRAY(0x40008540)
-// Interrupts
-#define TIMER_INT_COMPARE0 16
-#define TIMER_INT_COMPARE1 17
-#define TIMER_INT_COMPARE2 18
-#define TIMER_INT_COMPARE3 19
-// Shortcuts
-#define TIMER_COMPARE0_CLEAR 0
-#define TIMER_COMPARE1_CLEAR 1
-#define TIMER_COMPARE2_CLEAR 2
-#define TIMER_COMPARE3_CLEAR 3
-#define TIMER_COMPARE0_STOP 8
-#define TIMER_COMPARE1_STOP 9
-#define TIMER_COMPARE2_STOP 10
-#define TIMER_COMPARE3_STOP 11
+#define T_PRESCALER              REG(0x510)
+#define T_CC                     ARR(0x540)
+
+// Timer 0
+#define TIMER0_START      TIMER[0].T_START
+#define TIMER0_STOP       TIMER[0].T_STOP
+#define TIMER0_COUNT      TIMER[0].T_COUNT
+#define TIMER0_CLEAR      TIMER[0].T_CLEAR
+#define TIMER0_SHUTDOWN   TIMER[0].T_SHUTDOWN
+#define TIMER0_CAPTURE    TIMER[0].T_CAPTURE
+#define TIMER0_COMPARE    TIMER[0].T_COMPARE
+#define TIMER0_SHORTS     TIMER[0].T_SHORTS
+#define TIMER0_INTENSET   TIMER[0].T_INTENSET
+#define TIMER0_INTENCLR   TIMER[0].T_INTENCLR
+#define TIMER0_MODE       TIMER[0].T_MODE
+#define TIMER0_BITMODE    TIMER[0].T_BITMODE
+#define TIMER0_PRESCALER  TIMER[0].T_PRESCALER
+#define TIMER0_CC         TIMER[0].T_CC
 
 // Timer 1
-#define TIMER1_START             ADDR(0x40009000)
-#define TIMER1_STOP              ADDR(0x40009004)
-#define TIMER1_COUNT             ADDR(0x40009008)
-#define TIMER1_CLEAR             ADDR(0x4000900c)
-#define TIMER1_SHUTDOWN          ADDR(0x40009010)
-#define TIMER1_CAPTURE          ARRAY(0x40009040)
-#define TIMER1_COMPARE          ARRAY(0x40009140)
-#define TIMER1_SHORTS            ADDR(0x40009200)
-#define TIMER1_INTENSET          ADDR(0x40009304)
-#define TIMER1_INTENCLR          ADDR(0x40009308)
-#define TIMER1_MODE              ADDR(0x40009504)
-#define TIMER1_BITMODE           ADDR(0x40009508)
-#define TIMER1_PRESCALER         ADDR(0x40009510)
-#define TIMER1_CC               ARRAY(0x40009540)
+#define TIMER1_START      TIMER[1].T_START
+#define TIMER1_STOP       TIMER[1].T_STOP
+#define TIMER1_COUNT      TIMER[1].T_COUNT
+#define TIMER1_CLEAR      TIMER[1].T_CLEAR
+#define TIMER1_SHUTDOWN   TIMER[1].T_SHUTDOWN
+#define TIMER1_CAPTURE    TIMER[1].T_CAPTURE
+#define TIMER1_COMPARE    TIMER[1].T_COMPARE
+#define TIMER1_SHORTS     TIMER[1].T_SHORTS
+#define TIMER1_INTENSET   TIMER[1].T_INTENSET
+#define TIMER1_INTENCLR   TIMER[1].T_INTENCLR
+#define TIMER1_MODE       TIMER[1].T_MODE
+#define TIMER1_BITMODE    TIMER[1].T_BITMODE
+#define TIMER1_PRESCALER  TIMER[1].T_PRESCALER
+#define TIMER1_CC         TIMER[1].T_CC
 
 // Timer 2
-#define TIMER2_START             ADDR(0x4000a000)
-#define TIMER2_STOP              ADDR(0x4000a004)
-#define TIMER2_COUNT             ADDR(0x4000a008)
-#define TIMER2_CLEAR             ADDR(0x4000a00c)
-#define TIMER2_SHUTDOWN          ADDR(0x4000a010)
-#define TIMER2_CAPTURE          ARRAY(0x4000a040)
-#define TIMER2_COMPARE          ARRAY(0x4000a140)
-#define TIMER2_SHORTS            ADDR(0x4000a200)
-#define TIMER2_INTENSET          ADDR(0x4000a304)
-#define TIMER2_INTENCLR          ADDR(0x4000a308)
-#define TIMER2_MODE              ADDR(0x4000a504)
-#define TIMER2_BITMODE           ADDR(0x4000a508)
-#define TIMER2_PRESCALER         ADDR(0x4000a510)
-#define TIMER2_CC               ARRAY(0x4000a540)
+#define TIMER2_START      TIMER[2].T_START
+#define TIMER2_STOP       TIMER[2].T_STOP
+#define TIMER2_COUNT      TIMER[2].T_COUNT
+#define TIMER2_CLEAR      TIMER[2].T_CLEAR
+#define TIMER2_SHUTDOWN   TIMER[2].T_SHUTDOWN
+#define TIMER2_CAPTURE    TIMER[2].T_CAPTURE
+#define TIMER2_COMPARE    TIMER[2].T_COMPARE
+#define TIMER2_SHORTS     TIMER[2].T_SHORTS
+#define TIMER2_INTENSET   TIMER[2].T_INTENSET
+#define TIMER2_INTENCLR   TIMER[2].T_INTENCLR
+#define TIMER2_MODE       TIMER[2].T_MODE
+#define TIMER2_BITMODE    TIMER[2].T_BITMODE
+#define TIMER2_PRESCALER  TIMER[2].T_PRESCALER
+#define TIMER2_CC         TIMER[2].T_CC
 
 
 /* Random Number Generator */
@@ -470,9 +492,13 @@ struct _ppi_ch {
 #define   UART_BAUDRATE_921600 0x0ebed000
 #define   UART_BAUDRATE_1M     0x10000000
 #define UART_CONFIG              ADDR(0x4000256c)
+#define   UART_CONFIG_HWFC 0
+#define   UART_CONFIG_PARITY 1, 3
+#define     UART_PARITY_None 0
+#define     UART_PARITY_Even 7
 // Interrupts
-#define UART_INT_TXDRDY 7
 #define UART_INT_RXDRDY 2
+#define UART_INT_TXDRDY 7
 
 /* ADC */
 // Tasks

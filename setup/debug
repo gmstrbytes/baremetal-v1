@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Debug target set by configuration or environment variable
+: ${DBGTGT:=nrf51}
+
 case $1 in
     *.elf)
         file=$1
@@ -18,7 +21,7 @@ GDB=`which arm-none-eabi-gdb` || GDB=`which gdb-multiarch` \
 
 # Start up the debug server: use "set -m" to protect from interrupts
 set -m
-openocd -f interface/cmsis-dap.cfg -f target/nrf51.cfg & # >/dev/null 2>&1 &
+pyocd gdbserver -t $DBGTGT >/dev/null 2>&1 &
 server=$!
 
 # Wait for the server to initialise

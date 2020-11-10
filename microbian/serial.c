@@ -5,8 +5,10 @@
 #include "hardware.h"
 #include <stdarg.h>
 
+#ifdef UBIT
 #define TX USB_TX
 #define RX USB_RX
+#endif
 
 /* Message types for serial task */
 #define PUTC 16
@@ -172,22 +174,21 @@ static void serial_task(int n) {
     char ch;
 
 #ifdef UBIT
-    UART_ENABLE = 0;
-
+    // When disabled, TX is output high, RX is input
     GPIO_DIRSET = BIT(TX);
     GPIO_DIRCLR = BIT(RX);
-    SET_FIELD(GPIO_PINCNF[TX], GPIO_PINCNF_PULL, GPIO_PULL_Pullup);
-    SET_FIELD(GPIO_PINCNF[RX], GPIO_PINCNF_PULL, GPIO_PULL_Pullup);
+    GPIO_OUTSET = BIT(TX);
 
+    UART_ENABLE = UART_ENABLE_Disabled;
     UART_BAUDRATE = UART_BAUDRATE_9600; // 9600 baud
-    UART_CONFIG = 0;                    // format 8N1
+    UART_CONFIG = FIELD(UART_CONFIG_PARITY, UART_PARITY_None);
+                                        // format 8N1
     UART_PSELTXD = TX;                  // choose pins
     UART_PSELRXD = RX;
     UART_ENABLE = UART_ENABLE_Enabled;
     UART_STARTTX = 1;
     UART_STARTRX = 1;
     UART_RXDRDY = 0;
-    UART_TXDRDY = 0;
 
     UART_INTENSET = BIT(UART_INT_RXDRDY) | BIT(UART_INT_TXDRDY);
     connect(UART_IRQ);
