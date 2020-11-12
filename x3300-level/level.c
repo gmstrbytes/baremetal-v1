@@ -46,6 +46,6 @@ static void main(int n) {
 void init(void) {
     serial_init();
     timer_init();
-    i2c_init();
+    i2c_init(0);
     start("Main", main, 0, STACK);
 }

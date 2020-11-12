@@ -7,16 +7,17 @@ CC = arm-none-eabi-gcc
 CPU = -mcpu=cortex-m0 -mthumb
 CFLAGS = -O -g -Wall -ffreestanding
 AS = arm-none-eabi-as
+LD = arm-none-eabi-ld
 SIZE = arm-none-eabi-size
 OBJCOPY = arm-none-eabi-objcopy
 
 %.o: %.c
-	$(CC) $(CPU) $(CFLAGS) -c $< -o $@
+	$(CC) $(CPU) $(CFLAGS) $(INCLUDE) -c $< -o $@
 
 %.o: %.s
 	$(AS) $(CPU) $< -o $@
 
-%.elf: %.o fmain.o lib.o startup.o
+%.elf: %.o startup.o
 	$(CC) $(CPU) $(CFLAGS) -T nRF51822.ld \
 		$^ -nostdlib -lgcc -o $@ -Wl,-Map,$*.map
 	$(SIZE) $@
@@ -25,7 +26,7 @@ OBJCOPY = arm-none-eabi-objcopy
 	$(OBJCOPY) -O ihex $< $@
 
 # Nuke the default rules for building executables
-SORRY = echo "Please say 'make $@.hex' to compile the '$@' program"
+SORRY = echo "Please say 'make $@.hex' to compile '$@'"
 %: %.s; @$(SORRY)
 %: %.o; @$(SORRY)
 

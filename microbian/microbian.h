@@ -114,13 +114,13 @@ unsigned timer_now(void);
 void timer_init(void);
 
 /* i2c.c */
-int i2c_try_read(int addr, int cmd, byte *buf);
-int i2c_read_reg(int addr, int cmd);
-void i2c_write_reg(int addr, int cmd, int val);
-void i2c_read_bytes(int addr, int cmd, byte *buf, int n);
-void i2c_write_bytes(int addr, int cmd, byte *buf, int n);
-int i2c_xfer(int kind, int addr, byte *buf1, int n1, byte *buf2, int n2);
-void i2c_init(void);
+int i2c_try_read(int j, int addr, int cmd, byte *buf);
+int i2c_read_reg(int j, int addr, int cmd);
+void i2c_write_reg(int j, int addr, int cmd, int val);
+void i2c_read_bytes(int j, int addr, int cmd, byte *buf, int n);
+void i2c_write_bytes(int j, int addr, int cmd, byte *buf, int n);
+int i2c_xfer(int j, int kind, int addr, byte *buf1, int n1, byte *buf2, int n2);
+void i2c_init(int j);
 
 
 /* radio.c */

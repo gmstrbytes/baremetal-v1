@@ -173,12 +173,21 @@ static void serial_task(int n) {
     int client;
     char ch;
 
-#ifdef UBIT
+#ifdef UBIT_V1
     // When disabled, TX is output high, RX is input
     GPIO_DIRSET = BIT(TX);
     GPIO_DIRCLR = BIT(RX);
     GPIO_OUTSET = BIT(TX);
+#endif
 
+#ifdef UBIT_V2
+    // When disabled, TX is output high, RX is input
+    GPIO[PORT(USB_TX)].G_DIRSET = BIT(PIN(USB_TX));
+    GPIO[PORT(USB_RX)].G_DIRCLR = BIT(PIN(USB_RX));
+    GPIO[PORT(USB_TX)].G_OUTSET = BIT(PIN(USB_TX));
+#endif
+
+#ifdef UBIT
     UART_ENABLE = UART_ENABLE_Disabled;
     UART_BAUDRATE = UART_BAUDRATE_9600; // 9600 baud
     UART_CONFIG = FIELD(UART_CONFIG_PARITY, UART_PARITY_None);

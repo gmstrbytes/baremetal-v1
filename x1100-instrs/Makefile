@@ -12,13 +12,13 @@ SIZE = arm-none-eabi-size
 OBJCOPY = arm-none-eabi-objcopy
 
 %.o: %.c
-	$(CC) $(CPU) $(CFLAGS) -c $< -o $@
+	$(CC) $(CPU) $(CFLAGS) $(INCLUDE) -c $< -o $@
 
 %.o: %.s
 	$(AS) $(CPU) $< -o $@
 
 # Use ld for linking to help with the explanation
-%.elf: %.o fmain.o lib.o startup.o
+%.elf: %.o startup.o
 	$(LD) -T nRF51822.ld $^ \
 		$(LIBGCC) -o $@ -Map $*.map
 	$(SIZE) $@
@@ -27,7 +27,7 @@ OBJCOPY = arm-none-eabi-objcopy
 	$(OBJCOPY) -O ihex $< $@
 
 # Nuke the default rules for building executables
-SORRY = echo "Please say 'make $@.hex' to compile the '$@' program"
+SORRY = echo "Please say 'make $@.hex' to compile '$@'"
 %: %.s; @$(SORRY)
 %: %.o; @$(SORRY)
 
@@ -38,7 +38,7 @@ GCCLIB := $(shell $(CC) --print-search-dirs \
 LIBGCC := $(word 1,$(wildcard \
 		$(GCCLIB)/thumb/v6-m/libgcc.a \
 		$(GCCLIB)/armv6-m/libgcc.a \
-		$(GCCLIB)/thumb/v6-m/nofp/libgcc.a) UNKNOWN)
+		$(GCCLIB)/thumb/v6-m/nofp/libgcc.a)  UNKNOWN)
 
 clean:
 	rm -f *.hex *.elf *.map *.o

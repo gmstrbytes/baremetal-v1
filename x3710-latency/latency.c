@@ -15,8 +15,7 @@ void timer2_handler(void) {
 }
 
 void timer_task(int arg) {
-    GPIO_DIRSET = 0xfff0;
-    GPIO_OUT = 0x3ff0;
+    gpio_dir(PAD0, 1); gpio_dir(PAD1, 1);
 
     // Set up timer 2 so that on overflow (once every millisecond)
     // it toggles two I/O pins and causes an interrupt
@@ -39,12 +38,12 @@ void timer_task(int arg) {
     // GPIOTE channels 0 and 1 toggle two pins
     GPIOTE_CONFIG[0] =
         FIELD(GPIOTE_CONFIG_MODE, GPIOTE_MODE_Task)
-        | FIELD(GPIOTE_CONFIG_PSEL, PAD3)
+        | FIELD(GPIOTE_CONFIG_PSEL, PAD0)
         | FIELD(GPIOTE_CONFIG_POLARITY, GPIOTE_POLARITY_Toggle)
         | FIELD(GPIOTE_CONFIG_OUTINIT, 1);
     GPIOTE_CONFIG[1] =
         FIELD(GPIOTE_CONFIG_MODE, GPIOTE_MODE_Task)
-        | FIELD(GPIOTE_CONFIG_PSEL, PAD4)
+        | FIELD(GPIOTE_CONFIG_PSEL, PAD1)
         | FIELD(GPIOTE_CONFIG_POLARITY, GPIOTE_POLARITY_Toggle)
         | FIELD(GPIOTE_CONFIG_OUTINIT, 1);
 

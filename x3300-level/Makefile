@@ -5,14 +5,20 @@ all: level.hex
 
 CC = arm-none-eabi-gcc
 CPU = -mcpu=cortex-m0 -mthumb
-CFLAGS = -O -g -Wall -ffreestanding -I ../microbian
+CFLAGS = -O -g -Wall -ffreestanding
+INCLUDE = -I ../microbian
+AS = arm-none-eabi-as
+LD = arm-none-eabi-ld
 SIZE = arm-none-eabi-size
 OBJCOPY = arm-none-eabi-objcopy
 
 vpath %.h ../microbian
 
 %.o: %.c
-	$(CC) $(CPU) $(CFLAGS) -c $< -o $@
+	$(CC) $(CPU) $(CFLAGS) $(INCLUDE) -c $< -o $@
+
+%.o: %.s
+	$(AS) $(CPU) $< -o $@
 
 %.elf: %.o accel.o ../microbian/microbian.a
 	$(CC) $(CPU) $(CFLAGS) -T ../microbian/nRF51822.ld \
@@ -26,7 +32,7 @@ vpath %.h ../microbian
 	$(MAKE) -C $(@D) $(@F)
 
 # Nuke the default rules for building executables
-SORRY = echo "Please say 'make $@.hex' to compile the '$@' program"
+SORRY = echo "Please say 'make $@.hex' to compile '$@'"
 %: %.s; @$(SORRY)
 %: %.o; @$(SORRY)
 

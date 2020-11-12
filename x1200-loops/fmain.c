@@ -5,15 +5,14 @@
 #include "lib.h"
 #include <stdarg.h>
 
+/* Pins to use for serial communication */
+#define TX USB_TX
+#define RX USB_RX
+
 int txinit;              // UART ready to transmit first char
 
 /* serial_init -- set up UART connection to host */
 void serial_init(void) {
-    // When disabled, TX is output high, RX is input
-    GPIO_DIRSET = BIT(TX);
-    GPIO_DIRCLR = BIT(RX);
-    GPIO_OUTSET = BIT(TX);
-
     UART_ENABLE = UART_ENABLE_Disabled;
     UART_BAUDRATE = UART_BAUDRATE_9600; // 9600 baud
     UART_CONFIG = FIELD(UART_CONFIG_PARITY, UART_PARITY_None);

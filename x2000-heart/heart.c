@@ -44,6 +44,11 @@ void init(void) {
     GPIO_PINCNF[BUTTON_A] = 0;
     GPIO_PINCNF[BUTTON_B] = 0;
 
+    // Set row pins to high-drive mode to increase brightness
+    SET_FIELD(GPIO_PINCNF[13], GPIO_PINCNF_DRIVE, GPIO_DRIVE_S0H1);
+    SET_FIELD(GPIO_PINCNF[14], GPIO_PINCNF_DRIVE, GPIO_DRIVE_S0H1);
+    SET_FIELD(GPIO_PINCNF[15], GPIO_PINCNF_DRIVE, GPIO_DRIVE_S0H1);
+
     while (1) {
         show(heart, 70);
         show(small, 10);

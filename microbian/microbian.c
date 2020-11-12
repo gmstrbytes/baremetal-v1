@@ -582,17 +582,16 @@ static void kprintf_setup(void) {
     // Delay so any UART activity can cease
     delay_usec(2000);
 
-    // Reconfigure the UART just to be sure
-    GPIO_DIRSET = BIT(TX);
-    GPIO_DIRCLR = BIT(RX);
-    GPIO_OUTSET = BIT(TX);
+    // Set up pins to maintain signal levels while UART disabled
+    gpio_dir(USB_TX, 1); gpio_dir(USB_RX, 0); gpio_out(USB_TX, 1);
 
+    // Reconfigure the UART just to be sure
     UART_ENABLE = UART_ENABLE_Disabled;
     UART_BAUDRATE = UART_BAUDRATE_9600; // 9600 baud
     UART_CONFIG = FIELD(UART_CONFIG_PARITY, UART_PARITY_None);
                                         // format 8N1
-    UART_PSELTXD = TX;                  // choose pins
-    UART_PSELRXD = RX;
+    UART_PSELTXD = USB_TX;              // choose pins
+    UART_PSELRXD = USB_RX;
     UART_ENABLE = UART_ENABLE_Enabled;
     UART_STARTTX = 1;
     UART_STARTRX = 1;

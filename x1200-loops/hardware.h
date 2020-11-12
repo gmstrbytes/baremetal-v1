@@ -66,6 +66,9 @@ argument to be a macro that expands the a 'position, width' pair. */
 #define PAD20 30
 #define  I2C_SDA 30
 
+#define EXT_I2C 0
+
+
 /* Image constants */
 #define __ROW(r, c1, c2, c3, c4, c5, c6, c7, c8, c9)                   \
     (BIT(r+13) | !c1<<4 | !c2<<5 | !c3<<6 | !c4>>7 | !c5<<8            \
@@ -163,6 +166,7 @@ argument to be a macro that expands the a 'position, width' pair. */
 #define   GPIO_PINCNF_DRIVE 8, 3
 #define     GPIO_DRIVE_S0S1 0
 #define     GPIO_DRIVE_H0S1 1
+#define     GPIO_DRIVE_S0H1 2
 #define     GPIO_DRIVE_S0D1 6 // Open drain
 #define   GPIO_PINCNF_SENSE 16, 2
 #define     GPIO_SENSE_Disabled 0
@@ -286,7 +290,7 @@ struct _ppi_ch {
 #define ARR(i) arr[i>>2]
 
 union _timer {
-    unsigned volatile reg[i];
+    unsigned volatile reg[1];
     unsigned volatile arr[1][1];
     unsigned char strut[0x1000];
 };
@@ -410,40 +414,47 @@ union _timer {
 #define TEMP_INT_DATARDY 0
 
 /* I2C -- Interface 0 */
+union _i2c {
+    unsigned volatile reg[1];
+    unsigned char strut[0x1000];
+};
+
+#define I2C ((union _i2c *) 0x40003000)
+
 // Tasks
-#define I2C_STARTRX              ADDR(0x40003000)
-#define I2C_STARTTX              ADDR(0x40003008)
-#define I2C_STOP                 ADDR(0x40003014)
-#define I2C_SUSPEND              ADDR(0x4000301c)
-#define I2C_RESUME               ADDR(0x40003020)
+#define I_STARTRX                REG(0x000)
+#define I_STARTTX                REG(0x008)
+#define I_STOP                   REG(0x014)
+#define I_SUSPEND                REG(0x01c)
+#define I_RESUME                 REG(0x020)
 // Events
-#define I2C_STOPPED              ADDR(0x40003104)
-#define I2C_RXDREADY             ADDR(0x40003108)
-#define I2C_TXDSENT              ADDR(0x4000311c)
-#define I2C_ERROR                ADDR(0x40003124)
-#define I2C_BB                   ADDR(0x40003138)
-#define I2C_SUSPENDED            ADDR(0x40003148)
+#define I_STOPPED                REG(0x104)
+#define I_RXDREADY               REG(0x108)
+#define I_TXDSENT                REG(0x11c)
+#define I_ERROR                  REG(0x124)
+#define I_BB                     REG(0x138)
+#define I_SUSPENDED              REG(0x148)
 // Registers
-#define I2C_SHORTS               ADDR(0x40003200)
-#define I2C_INTEN                ADDR(0x40003300)
-#define I2C_INTENSET             ADDR(0x40003304)
-#define I2C_INTENCLR             ADDR(0x40003308)
-#define I2C_ERRORSRC             ADDR(0x400034c4)
+#define I_SHORTS                 REG(0x200)
+#define I_INTEN                  REG(0x300)
+#define I_INTENSET               REG(0x304)
+#define I_INTENCLR               REG(0x308)
+#define I_ERRORSRC               REG(0x4c4)
 #define   I2C_ERRORSRC_OVERRUN 0
 #define   I2C_ERRORSRC_ANACK 1
 #define   I2C_ERRORSRC_DNACK 2
 #define   I2C_ERRORSRC_All 0x7
-#define I2C_ENABLE               ADDR(0x40003500) 
+#define I_ENABLE                 REG(0x500) 
 #define   I2C_ENABLE_Disabled 0
 #define   I2C_ENABLE_Enabled 5
-#define I2C_PSELSCL              ADDR(0x40003508)
-#define I2C_PSELSDA              ADDR(0x4000350c)
-#define I2C_RXD                  ADDR(0x40003518)
-#define I2C_TXD                  ADDR(0x4000351c) 
-#define I2C_FREQUENCY            ADDR(0x40003524)
+#define I_PSELSCL                REG(0x508)
+#define I_PSELSDA                REG(0x50c)
+#define I_RXD                    REG(0x518)
+#define I_TXD                    REG(0x51c) 
+#define I_FREQUENCY              REG(0x524)
 #define   I2C_FREQUENCY_100kHz 0x01980000
-#define I2C_ADDRESS              ADDR(0x40003588)
-#define I2C_POWER                ADDR(0x40003ffc)
+#define I_ADDRESS                REG(0x588)
+#define I_POWER                  REG(0xffc)
 // Interrupts
 #define I2C_INT_STOPPED 1
 #define I2C_INT_RXDREADY 2
@@ -453,6 +464,7 @@ union _timer {
 // Shortcuts
 #define I2C_BB_SUSPEND 0
 #define I2C_BB_STOP 1
+
 
 /* UART */
 // Tasks
@@ -556,6 +568,30 @@ void irq_priority(int irq, unsigned priority);
 
 /* active_irq -- find active interrupt: -16 to 31 */
 #define active_irq()  (GET_FIELD(SCB_ICSR, SCB_ICSR_VECTACTIVE) - 16)
+
+
+/* GPIO convenience */
+
+/* gpio_dir -- set GPIO direction */
+inline void gpio_dir(unsigned pin, unsigned dir) {
+    if (dir)
+        GPIO_DIRSET = BIT(pin);
+    else
+        GPIO_DIRCLR = BIT(pin);
+}
+
+/* gpio_drive -- set GPIO drive strength */
+inline void pin_drive(unsigned pin, unsigned mode) {
+    SET_FIELD(GPIO_PINCNF[pin], GPIO_PINCNF_DRIVE, mode);
+}
+
+/* gpio_value -- set GPIO output value */
+inline void gpio_out(unsigned pin, unsigned value) {
+    if (value)
+        GPIO_OUTSET = BIT(pin);
+    else
+        GPIO_OUTCLR = BIT(pin);
+}
 
 
 /* One assembler macro -- forgive me! */

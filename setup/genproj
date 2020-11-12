@@ -14,17 +14,23 @@ project() {
         $dir/setup/$type.geany >$dir/$proj/$name.geany
 }
 
-project x1100-instrs type1 func.s func
-project x1200-loops type1 mult.s mult
-project x1000-echo type2 echo.c echo
-project x2000-heart type2 heart.c heart
-project x2100-serial type2 primes.c primes
-project x2200-interrupt type2 primes2.c primes2
-project x2300-intrmech type2 bitbang.c bitbang
-project x2400-neopixels type2 rainbow.c rainbow
-project x3000-processes type3 valentine.c valentine
-project x3040-messages type3 pcount.c pcount
-project x3300-level type3 level.c level
-project x3340-scrollbit type3 scrollbit.c scrollbit
-project x3710-latency type3 latency.c latency
-project x1500-hack hack total.c total
+
+project x1000-echo part2 echo.c echo.hex
+project x1100-instrs part1 func.s func.hex
+project x1140-branches part1 max.s max.hex
+project x1200-loops part1 mult.s mult.hex
+project x1300-subrs part1 fact.s fact.hex
+project x1400-arrays part1 bank.s bank.hex
+project x1500-hack hack total.c total.hex
+project x2000-heart part2 heart.c heart.hex
+project x2100-serial part2 primes.c primes.hex
+project x2200-interrupt part2 primes2.c primes2.hex
+project x2300-intrmech part2 bitbang.c bitbang.hex
+project x2400-neopixels part2 rainbow.c rainbow.hex
+project x3000-processes part3 valentine.c valentine.hex
+project x3040-messages part3 pcount.c pcount.hex
+project x3100-sync part3 chaos.c chaos.hex
+project x3300-level part3 level.c level.hex
+project x3340-scrollbit part3 scrollbit.c scrollbit.hex
+project x3600-radio part3 remote.c remote.hex
+project x3710-latency part3 latency.c latency.hex

@@ -4,14 +4,17 @@
 #include "microbian.h"
 #include "hardware.h"
 
-#define TICK 5                  /* Interval between updates (ms) */
+#ifdef UBIT_V2
+#define TICK 1                  // Interval between updates (ms)
+#endif
+
+#ifndef TICK
+#define TICK 5                  // Sensible default
+#endif
 
 #define MAX_TIMERS 8
 
-static int TIMER;
-
 /* Millis will overflow in about 46 days, but that's long enough. */
-
 static unsigned millis = 0;
 
 struct {
@@ -120,7 +123,7 @@ void timer_task(int n) {
     }
 }
 
-static int TIMER;
+static int TIMER_TASK;
 
 void timer_init(void) {
     int i;
@@ -128,7 +131,7 @@ void timer_init(void) {
     for (i = 0; i < MAX_TIMERS; i++)
         timer[i].client = -1;
 
-    TIMER = start("Timer", timer_task, 0, 256);
+    TIMER_TASK = start("Timer", timer_task, 0, 256);
 }
 
 /* timer_now -- return current time in millis since boot */
@@ -141,7 +144,7 @@ void timer_delay(int msec) {
     message m;
     m.m_i1 = msec;
     m.m_i2 = 0;                 /* Don't repeat */
-    send(TIMER, REGISTER, &m);
+    send(TIMER_TASK, REGISTER, &m);
     receive(PING, NULL);
 }
 
@@ -150,7 +153,7 @@ void timer_pulse(int msec) {
     message m;
     m.m_i1 = msec;
     m.m_i2 = 1;                /* Repetitive */
-    send(TIMER, REGISTER, &m);
+    send(TIMER_TASK, REGISTER, &m);
 }
 
 /* wait -- sleep until next timer pulse */

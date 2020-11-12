@@ -10,6 +10,7 @@
 /* neoframe -- output a neopixel string */
 void neoframe(unsigned pin, unsigned *buf, int n);
 
+#ifdef UBIT_V1
 /* delay -- pause for n microseconds */
 void delay(unsigned n) {
     unsigned t = n << 1;
@@ -19,6 +20,21 @@ void delay(unsigned n) {
         t--;
     }
 }
+#endif
+
+void delay(unsigned n);
+
+#ifdef xxxUBIT_V2
+/* delay -- pause for n microseconds */
+void delay(unsigned n) {
+    unsigned t = n << 4;
+    while (t > 0) {
+        // 62.5nsec per iteration at 64MHz
+        nop();
+        t--;
+    }
+}
+#endif
 
 /* rgb -- assemble a colour from RGB components */
 unsigned RGB(unsigned r, unsigned g, unsigned b) {
@@ -70,8 +86,7 @@ void init(void) {
     int u = 0;
 
     // Set up pin NEO for output
-    GPIO_OUT = 0;
-    GPIO_DIRSET = BIT(NEO);
+    gpio_dir(NEO, 1);
 
     // Initialise to all pixels off
     neoframe(NEO, pix, NPIX);
