@@ -60,10 +60,26 @@ static void create(int client, int delay, int repeat) {
         timer[i].period = 0;
 }
 
-void timer_task(int n) {
+static int TIMER_TASK;
+
+/* timer1_handler is marked as a weak symbol so that this module won't
+   be linked merely in order to resolve the reference to it from the
+   vector table.  */
+
+/* timer1_handler -- interrupt handler */
+void __attribute__((weak)) timer1_handler(void) {
+    // Update the time here so it is accessible to timer_micros
+
+    if (TIMER1_COMPARE[0]) {
+        millis += TICK;
+        TIMER1_COMPARE[0] = 0;
+        interrupt(TIMER_TASK);
+    }
+}
+
+static void timer_task(int n) {
     message m;
 
-#ifdef UBIT
     /* We use Timer 1 because its 16-bit mode is adequate for a clock
        with up to 1us resulution and 1ms period, leaving the 32-bit
        Timer 0 for other purposes. */
@@ -77,41 +93,17 @@ void timer_task(int n) {
     TIMER1_SHORTS = BIT(TIMER_COMPARE0_CLEAR);
     TIMER1_INTENSET = BIT(TIMER_INT_COMPARE0);
     TIMER1_START = 1;
-
-    connect(TIMER1_IRQ);
-#endif
-
-#ifdef KL25Z
-    /* Use the Systick timer.  On KL25, we can set it to use the
-       'external' clock which is the system clock scaled by 16, so 3MHz. */
-
-    SYST_CSR = BIT(SYST_CSR_TICKINT);
-    SYST_CVR = 0;
-    SYST_RVR = 3000 * TICK;
-    SET_BIT(SYST_CSR, SYST_CSR_ENABLE);
-#endif
+    enable_irq(TIMER1_IRQ);
 
     while (1) {
         receive(ANY, &m);
 
         switch (m.m_type) {
         case INTERRUPT:
-#ifdef UBIT
-            if (TIMER1_COMPARE[0]) {
-                millis += TICK;
-                TIMER1_COMPARE[0] = 0;
-                check_timers();
-            }
-            clear_pending(TIMER1_IRQ);
+            disable_irq(TIMER1_IRQ);
             enable_irq(TIMER1_IRQ);
-            break;
-#endif
-
-#ifdef KL25Z
-            millis += TICK;
             check_timers();
             break;
-#endif
 
         case REGISTER:
             create(m.m_sender, m.m_i1, m.m_i2);
@@ -123,8 +115,6 @@ void timer_task(int n) {
     }
 }
 
-static int TIMER_TASK;
-
 void timer_init(void) {
     int i;
 
@@ -134,9 +124,34 @@ void timer_init(void) {
     TIMER_TASK = start("Timer", timer_task, 0, 256);
 }
 
-/* timer_now -- return current time in millis since boot */
+/* timer_now -- return current time in milliseconds since startup */
 unsigned timer_now(void) {
     return millis;
+}
+
+/* timer_micros -- return microseconds since startup */
+unsigned timer_micros(void) {
+    unsigned my_millis, ticks1, ticks2, extra;
+    
+    /* We must allow for the possibility the timer has overflowed but
+       the interrupt has not yet been handled. Worse, the timer
+       overflow could happen between looking at the timer and looking
+       at the interrupt flag. */
+
+    intr_disable();
+    TIMER1_CAPTURE[1] = 1;      // Capture count before testing irq
+    extra = TIMER1_COMPARE[0];  // Inspect the IRQ
+    TIMER1_CAPTURE[2] = 1;      // Capture count afterwards
+    ticks1 = TIMER1_CC[1];
+    ticks2 = TIMER1_CC[2];
+    my_millis = millis;
+    intr_enable();
+
+    /* No correction if overflow happened after the first observation */
+    if (extra && ticks1 <= ticks2)
+        my_millis += TICK;
+
+    return 1000 * my_millis + ticks1;
 }
 
 /* timer_delay -- one-shot delay */

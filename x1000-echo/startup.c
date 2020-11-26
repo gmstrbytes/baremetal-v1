@@ -109,22 +109,26 @@ void irq_priority(int irq, unsigned prio) {
    can subsitute their own definitions for individual handler names
    like uart_handler(). */
 
+/* delay_loop -- timed delay */
+void delay_loop(unsigned usecs) {
+    unsigned t = usecs << 2;
+    while (t > 0) {
+        // 500nsec per iteration at 16MHz
+        nop(); nop(); nop();
+        t--;
+    }
+}
+
 /* spin -- show Seven Stars of Death */
 void spin(void) {
-    int n;
-
     intr_disable();
 
     GPIO_DIR = 0xfff0;
     while (1) {
         GPIO_OUT = 0x4000;
-        for (n = 1000000; n > 0; n--) { // 500nsec per iteration, 0.5s total
-            nop(); nop(); nop();
-        }
+        delay_loop(500000);
         GPIO_OUT = 0;
-        for (n = 200000; n > 0; n--) { // 0.1s delay
-            nop(); nop(); nop();
-        }
+        delay_loop(100000);
     }          
 }
 

@@ -35,7 +35,7 @@ sudo apt-get -y install \
      gcc-arm-none-eabi gdb-arm-none-eabi \
      pulseview sigrok-firmware-fx2lafw \
      minicom geany geany-plugin-projectorganizer \
-     python3-pip
+     python3-pip bsdmainutils
 echo
 
 vers=$(dpkg-query -W -f '${Version}\n' geany)

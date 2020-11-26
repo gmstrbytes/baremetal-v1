@@ -36,10 +36,13 @@ void serial_putc(char ch) {
     UART_TXD = ch;
 }
 
-/* putchar -- character output for use by printf */
-void putchar(char c) {
-    if (c == '\n') serial_putc('\r');
-    serial_putc(c);
+/* putbuf -- output routine for use by printf */
+void putbuf(char *buf, int n) {
+    for (int i = 0; i < n; i++) {
+        char c = buf[i];
+        if (c == '\n') serial_putc('\r');
+        serial_putc(c);
+    }
 }
 
 int modulo(int a, int b) {
@@ -57,12 +60,9 @@ int prime(int n) {
     return 1;
 }
 
-#define LEDS 0x0000fff0
-#define LITE 0x00005fbf
-
 void start_timer(void) {
     // Light an LED
-    GPIO_OUT = LITE;
+    led_dot();
 
     // Start a timer
     TIMER0_MODE = TIMER_MODE_Timer;
@@ -73,7 +73,7 @@ void start_timer(void) {
 
 void stop_timer(void) {
     // Turn LED off
-    GPIO_OUT = 0;
+    led_off();
 
     // Fetch timer result
     TIMER0_CAPTURE[0] = 1;
@@ -81,22 +81,12 @@ void stop_timer(void) {
     printf("%d millisec\n", (time1+500)/1000);
 }
 
-/* delay -- pause for n microseconds */
-void delay(unsigned n) {
-    unsigned t = n << 1;
-    while (t > 0) {
-        // 500nsec per iteration at 16MHz
-        nop(); nop(); nop();
-        t--;
-    }
-}
-
 void init(void) {
     int n = 2, count = 0;
 
-    GPIO_DIRSET = LEDS;
+    led_init();
     serial_init();
-    delay(10000);
+    delay_loop(10000);
     start_timer();
 
     while (count < 500) {

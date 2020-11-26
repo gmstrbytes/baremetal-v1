@@ -18,9 +18,8 @@ OBJCOPY = arm-none-eabi-objcopy
 	$(AS) $(CPU) $< -o $@
 
 # Use ld for linking to help with the explanation
-%.elf: %.o startup.o
-	$(LD) -T nRF51822.ld $^ \
-		$(LIBGCC) -o $@ -Map $*.map
+%.elf: %.o fmain.o lib.o startup.o libgcc.a
+	$(LD) -T nRF51822.ld $^ -o $@ -Map $*.map
 	$(SIZE) $@
 
 %.hex: %.elf
@@ -35,10 +34,8 @@ SORRY = echo "Please say 'make $@.hex' to compile '$@'"
 GCCLIB := $(shell $(CC) --print-search-dirs \
 		| sed -n '/^libraries: =\([^:]*\)\/:.*/s//\1/p')
 # Then try a couple of likely subdirectories for the library.
-LIBGCC := $(word 1,$(wildcard \
-		$(GCCLIB)/thumb/v6-m/libgcc.a \
-		$(GCCLIB)/armv6-m/libgcc.a \
-		$(GCCLIB)/thumb/v6-m/nofp/libgcc.a)  UNKNOWN)
+vpath libgcc.a $(GCCLIB)/thumb/v6-m \
+		$(GCCLIB)/armv6-m $(GCCLIB)/thumb/v6-m/nofp
 
 clean:
 	rm -f *.hex *.elf *.map *.o

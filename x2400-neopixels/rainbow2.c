@@ -28,16 +28,6 @@ void neoframe(unsigned pin, unsigned *buf, int n) {
     }
 }
 
-/* delay -- pause for n microseconds */
-void delay(unsigned n) {
-    unsigned t = n << 1;
-    while (t > 0) {
-        // 500nsec per iteration at 16MHz
-        nop(); nop(); nop();
-        t--;
-    }
-}
-
 /* rgb -- assemble a colour from RGB components */
 unsigned RGB(unsigned r, unsigned g, unsigned b) {
     // Note the awkward GRB colour order of Neopixels
@@ -106,6 +96,6 @@ void init(void) {
         u++;
 
         // Delay before next frame
-        delay(100000);
+        delay_loop(100000);
     }
 }

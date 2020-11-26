@@ -145,12 +145,45 @@ int sprintf(char *buf, const char *fmt, ...) {
     return (p - buf);
 }
 
-/* putchar -- must be provided by client */
-void putchar(char c);
+/* To reduce the number of context switches needed when printf runs
+   under micro:bian, it maintains a small internal buffer that is
+   flushed just before printf returns: unlike the usual buffering,
+   there is no need for fflush(stdout), something that makes things
+   easier for beginners.  This buffer complicates the behaviour of the
+   'chaos' example: don't be tempted to make the buffer bigger, or all
+   chaos will be removed!  Clients other than micro:bian see no
+   benefit from the buffering because putbuf is implemented by
+   repeated calls to serial_putc. */
 
+/* putbuf -- must be provided by client */
+extern void putbuf(char *buf, int n);
+
+#define NBUF 16
+
+struct buffer {
+    char buf[NBUF];
+    int nbuf;
+};
+    
+static void flush(struct buffer *b) {
+    putbuf(b->buf, b->nbuf);
+    b->nbuf = 0;
+}
+
+static void f_bufferc(void *q, char c) {
+    struct buffer *b = (struct buffer *) q;
+    if (b->nbuf == NBUF) flush(b);
+    b->buf[b->nbuf++] = c;
+}
+
+/* printf -- print using client-supplid putbuf */
 void printf(const char *fmt, ...) {
+    struct buffer b;
+
+    b.nbuf = 0;
     va_list va;
     va_start(va, fmt);
-    do_print(putchar, fmt, va);
+    _do_print(f_bufferc, &b, fmt, va);
     va_end(va);
+    flush(&b);
 }

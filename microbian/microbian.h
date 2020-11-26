@@ -111,6 +111,7 @@ void timer_delay(int msec);
 void timer_pulse(int msec);
 void timer_wait(void);
 unsigned timer_now(void);
+unsigned timer_micros(void);
 void timer_init(void);
 
 /* i2c.c */
@@ -121,7 +122,6 @@ void i2c_read_bytes(int j, int addr, int cmd, byte *buf, int n);
 void i2c_write_bytes(int j, int addr, int cmd, byte *buf, int n);
 int i2c_xfer(int j, int kind, int addr, byte *buf1, int n1, byte *buf2, int n2);
 void i2c_init(int j);
-
 
 /* radio.c */
 #define RADIO_PACKET 32
@@ -142,3 +142,11 @@ void temp_init(void);
 unsigned randint(void);
 unsigned randbyte(void);
 void random_init(void);
+
+/* display.c */
+void display_set(const unsigned *img);
+void display_init(void);
+
+extern const unsigned blank_image[];
+void image_clear(unsigned *img);
+void image_set(int x, int y, unsigned *img);

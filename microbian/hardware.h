@@ -8,7 +8,9 @@
 
 #define BIT(i) (1 << (i))
 #define SET_BIT(reg, n) reg |= BIT(n)
+#define GET_BIT(reg, n) (((reg) >> (n)) & 0x1)
 #define CLR_BIT(reg, n) reg &= ~BIT(n)
+#define GET_BYTE(reg, n) (((reg) >> (8*(n))) & 0xff)
 #define SET_BYTE(reg, n, v) \
     reg = (reg & ~(0xff << 8*n)) | ((v & 0xff) << 8*n)
 
@@ -69,26 +71,13 @@ argument to be a macro that expands the a 'position, width' pair. */
 #define EXT_I2C 0
 
 
-/* Image constants */
-#define __ROW(r, c1, c2, c3, c4, c5, c6, c7, c8, c9)                   \
-    (BIT(r+13) | !c1<<4 | !c2<<5 | !c3<<6 | !c4>>7 | !c5<<8            \
-     | !c6<<9 | !c7<<10 | !c8<<11 | !c9<<12)
-
-#define IMAGE(x11, x24, x12, x25, x13,                               \
-              x34, x35, x36, x37, x38,                               \
-              x22, x19, x23, x39, x21,                               \
-              x18, x17, x16, x15, x14,                               \
-              x33, x27, x31, x26, x32)                               \
-    { __ROW(0, x11, x12, x13, x14, x15, x16, x17, x18, x19),         \
-      __ROW(1, x21, x22, x23, x24, x25, x26, x27, 0, 0),             \
-      __ROW(2, x31, x32, x33, x34, x35, x36, x37, x38, x39) }
-
 /* Interrupts */
 #define SVC_IRQ    -5
 #define PENDSV_IRQ -2
 #define RADIO_IRQ   1
 #define UART_IRQ    2
 #define I2C_IRQ     3
+#define GPIOTE_IRQ  6
 #define ADC_IRQ     7
 #define TIMER0_IRQ  8
 #define TIMER1_IRQ  9
@@ -569,6 +558,9 @@ void irq_priority(int irq, unsigned priority);
 /* active_irq -- find active interrupt: -16 to 31 */
 #define active_irq()  (GET_FIELD(SCB_ICSR, SCB_ICSR_VECTACTIVE) - 16)
 
+/* delay_loop -- timed delay */
+void delay_loop(unsigned usec);
+
 
 /* GPIO convenience */
 
@@ -580,18 +572,50 @@ inline void gpio_dir(unsigned pin, unsigned dir) {
         GPIO_DIRCLR = BIT(pin);
 }
 
+/* gpio_connect -- connect pin for input */
+inline void gpio_connect(unsigned pin) {
+    SET_FIELD(GPIO_PINCNF[pin], GPIO_PINCNF_INPUT, GPIO_INPUT_Connect);
+}
+
 /* gpio_drive -- set GPIO drive strength */
-inline void pin_drive(unsigned pin, unsigned mode) {
+inline void gpio_drive(unsigned pin, unsigned mode) {
     SET_FIELD(GPIO_PINCNF[pin], GPIO_PINCNF_DRIVE, mode);
 }
 
-/* gpio_value -- set GPIO output value */
+/* gpio_out -- set GPIO output value */
 inline void gpio_out(unsigned pin, unsigned value) {
     if (value)
         GPIO_OUTSET = BIT(pin);
     else
         GPIO_OUTCLR = BIT(pin);
 }
+
+/* gpio_in -- get GPIO input bit */
+inline unsigned gpio_in(unsigned pin) {
+    return (GPIO_IN & BIT(pin)) != 0;
+}
+
+
+/* Image constants */
+
+typedef unsigned image[3];
+
+#define __ROW(r, c1, c2, c3, c4, c5, c6, c7, c8, c9)                   \
+    (BIT(r+13) | !c1<<4 | !c2<<5 | !c3<<6 | !c4<<7 | !c5<<8            \
+     | !c6<<9 | !c7<<10 | !c8<<11 | !c9<<12)
+
+#define IMAGE(x11, x24, x12, x25, x13,                               \
+              x34, x35, x36, x37, x38,                               \
+              x22, x19, x23, x39, x21,                               \
+              x18, x17, x16, x15, x14,                               \
+              x33, x27, x31, x26, x32)                               \
+    { __ROW(0, x11, x12, x13, x14, x15, x16, x17, x18, x19),         \
+      __ROW(1, x21, x22, x23, x24, x25, x26, x27, 0, 0),             \
+      __ROW(2, x31, x32, x33, x34, x35, x36, x37, x38, x39) }
+
+#define led_init()  GPIO_DIRSET = 0x0000fff0
+#define led_dot()   GPIO_OUTSET = 0x00005fbf
+#define led_off()   GPIO_OUTCLR = 0x0000fff0;
 
 
 /* One assembler macro -- forgive me! */

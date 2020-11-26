@@ -10,32 +10,6 @@
 /* neoframe -- output a neopixel string */
 void neoframe(unsigned pin, unsigned *buf, int n);
 
-#ifdef UBIT_V1
-/* delay -- pause for n microseconds */
-void delay(unsigned n) {
-    unsigned t = n << 1;
-    while (t > 0) {
-        // 500nsec per iteration at 16MHz
-        nop(); nop(); nop();
-        t--;
-    }
-}
-#endif
-
-void delay(unsigned n);
-
-#ifdef xxxUBIT_V2
-/* delay -- pause for n microseconds */
-void delay(unsigned n) {
-    unsigned t = n << 4;
-    while (t > 0) {
-        // 62.5nsec per iteration at 64MHz
-        nop();
-        t--;
-    }
-}
-#endif
-
 /* rgb -- assemble a colour from RGB components */
 unsigned RGB(unsigned r, unsigned g, unsigned b) {
     // Note the awkward GRB colour order of Neopixels
@@ -85,6 +59,11 @@ unsigned pix[NPIX];
 void init(void) {
     int u = 0;
 
+#ifdef UBIT_V2
+    // Enable the instruction cache
+    SET_BIT(NVMC_ICACHECONF, NVMC_ICACHECONF_CACHEEN);
+#endif
+
     // Set up pin NEO for output
     gpio_dir(NEO, 1);
 
@@ -103,6 +82,6 @@ void init(void) {
         u++;
 
         // Delay before next frame
-        delay(100000);
+        delay_loop(100000);
     }
 }

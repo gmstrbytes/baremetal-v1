@@ -307,7 +307,7 @@ static int os_handler[32];
 /* connect -- connect the current process to an IRQ */
 void connect(int irq) {
     if (irq < 0) panic("Can't connect to CPU exceptions");
-    os_current->p_priority = 0;
+    os_current->p_priority = P_HANDLER;
     os_handler[irq] = os_current->p_pid;
     enable_irq(irq);
 }
@@ -439,8 +439,8 @@ int start(char *name, void (*body)(int), int arg, int stksize) {
     return p->p_pid;
 }
 
-/* setstack -- enter thread mode with specified stack */
-void setstack(unsigned *sp);
+/* set_stack -- enter thread mode with specified stack (see mpx.s) */
+void set_stack(unsigned *sp);
 
 /* os_start -- start up the process scheduler */
 void os_start(void) {
@@ -449,13 +449,16 @@ void os_start(void) {
     // stack.
 
     os_current = idle_proc;
-    setstack(os_current->p_sp);
+    set_stack(os_current->p_sp);
     yield();                    // Pick a real process to run
 
     // Idle only runs again when there's nothing to do.
     while (1) {
         pause();                // Wait for an interrupt
     }
+
+    /* On micro:bit V2, pause() doesn't actually put the processor to
+       sleep, because waking up entails a long delay. */
 }
 
 

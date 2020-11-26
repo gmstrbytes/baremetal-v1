@@ -13,6 +13,7 @@
 /* Message types for serial task */
 #define PUTC 16
 #define GETC 17
+#define PUTBUF 18
 
 /* There are two buffers, one for characters waiting to be output, and
    another for input characters waiting to be read by other processes.
@@ -167,25 +168,26 @@ static void reply(void) {
     }
 }
 
+/* queue_char -- add character to output buffer */
+static void queue_char(char ch) {
+    while (n_tx == NBUF) {
+        // The buffer is full -- wait for a space to appear
+        receive(INTERRUPT, NULL);
+        serial_interrupt();
+        reply();
+    }
+
+    txbuf[tx_inp] = ch;
+    tx_inp = wrap(tx_inp+1);
+    n_tx++;
+}
+
 /* serial_task -- driver process for UART */
-static void serial_task(int n) {
+static void serial_task(int arg) {
     message m;
-    int client;
+    int client, n;
     char ch;
-
-#ifdef UBIT_V1
-    // When disabled, TX is output high, RX is input
-    GPIO_DIRSET = BIT(TX);
-    GPIO_DIRCLR = BIT(RX);
-    GPIO_OUTSET = BIT(TX);
-#endif
-
-#ifdef UBIT_V2
-    // When disabled, TX is output high, RX is input
-    GPIO[PORT(USB_TX)].G_DIRSET = BIT(PIN(USB_TX));
-    GPIO[PORT(USB_RX)].G_DIRCLR = BIT(PIN(USB_RX));
-    GPIO[PORT(USB_TX)].G_OUTSET = BIT(PIN(USB_TX));
-#endif
+    char *buf;
 
 #ifdef UBIT
     UART_ENABLE = UART_ENABLE_Disabled;
@@ -248,23 +250,25 @@ static void serial_task(int n) {
 
         case GETC:
             if (reader >= 0)
-                panic("Two cannot wait for the input at once");
+                panic("Two clients cannot wait for input at once");
             reader = client;
             break;
             
         case PUTC:
             ch = m.m_i1;
+            if (ch == '\n') queue_char('\r');
+            queue_char(ch);
+            break;
 
-            while (n_tx == NBUF) {
-                // The buffer is full -- wait for a space to appear
-                receive(INTERRUPT, NULL);
-                serial_interrupt();
-                reply();
+        case PUTBUF:
+            buf = m.m_p1;
+            n = m.m_i2;
+            for (int i = 0; i < n; i++) {
+                char ch = buf[i];
+                if (ch == '\n') queue_char('\r');
+                queue_char(ch);
             }
-
-            txbuf[tx_inp] = ch;
-            tx_inp = wrap(tx_inp+1);
-            n_tx++;
+            send(client, REPLY, NULL);
             break;
 
         default:
@@ -285,7 +289,6 @@ void serial_init(void) {
 /* serial_putc -- queue a character for output */
 void serial_putc(char ch) {
     message m;
-
     m.m_i1 = ch;
     send(SERIAL, PUTC, &m);
 }
@@ -293,13 +296,14 @@ void serial_putc(char ch) {
 /* serial_getc -- request an input character */
 char serial_getc(void) {
     message m;
-
     sendrec(SERIAL, GETC, &m);
     return m.m_i1;
 }
 
-/* putchar -- character output for use by printf */
-void putchar(char c) {
-    if (c == '\n') serial_putc('\r');
-    serial_putc(c);
+/* putbuf -- output routine for use by printf */
+void putbuf(char *buf, int n) {
+    message m;
+    m.m_p1 = buf;
+    m.m_i2 = n;
+    sendrec(SERIAL, PUTBUF, &m);
 }

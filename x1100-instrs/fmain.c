@@ -83,10 +83,13 @@ void serial_getline(const char *prompt, char *buf, int nbuf) {
     }
 }
 
-/* putchar -- character output for use by printf */
-void putchar(char c) {
-    if (c == '\n') serial_putc('\r');
-    serial_putc(c);
+/* putbuf -- output routine for use by printf */
+void putbuf(char *buf, int n) {
+    for (int i = 0; i < n; i++) {
+        char c = buf[i];
+        if (c == '\n') serial_putc('\r');
+        serial_putc(c);
+    }
 }
 
 #define NBUF 80
@@ -127,8 +130,6 @@ char *fmt_fixed(unsigned t, unsigned n, int k) {
 }
 
 #ifdef UBIT_V1
-#define LIGHT 0x5fb0
-
 #define FUDGE 20                // ticks of overhead for function call
 #define MULT 1
 #define DIV 1
@@ -160,17 +161,10 @@ void init(void) {
 
     serial_init();
     printf("\nHello micro:world!\n\n");
-
-#ifdef UBIT_V1
-    GPIO_DIRSET = 0xfff0;
-#endif
-
-#ifdef UBIT_V2
-    GPIO0_DIRSET = LED_MASK0;
-    GPIO1_DIRSET = LED_MASK1;
-#endif
       
 #ifdef UBIT
+    led_init();
+
     // Set up TIMER0 in 32 bit mode
     TIMER0_MODE = TIMER_MODE_Timer;
     TIMER0_BITMODE = TIMER_BITMODE_32Bit;
@@ -195,22 +189,11 @@ void init(void) {
         a = getnum("a = ");
         b = getnum("b = ");
 
-#ifdef UBIT_V1
+#ifdef UBIT
         TIMER0_CLEAR = 1;
-        GPIO_OUTSET = LIGHT;
+        led_dot();
         c = func(a, b);
-        GPIO_OUTCLR = LIGHT;
-        TIMER0_CAPTURE[0] = 1;
-        time = TIMER0_CC[0];
-#endif
-        
-#ifdef UBIT_V2
-        TIMER0_CLEAR = 1;
-        GPIO0_OUTSET = LED_DOT0;
-        GPIO1_OUTSET = LED_DOT1;
-        c = func(a, b);
-        GPIO0_OUTCLR = LED_DOT0;
-        GPIO1_OUTCLR = LED_DOT1;
+        led_off();
         TIMER0_CAPTURE[0] = 1;
         time = TIMER0_CC[0];
 #endif

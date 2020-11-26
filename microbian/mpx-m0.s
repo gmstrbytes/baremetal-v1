@@ -6,10 +6,10 @@
         .syntax unified
         .text
 
-@@@ setstack -- enter process mode
-        .global setstack
+@@@ set_stack -- enter process mode
+        .global set_stack
         .thumb_func
-setstack:
+set_stack:
         msr psp, r0             @ Set up the stack
         movs r0, #2             @ Use psp for stack pointer
         msr control, r0
