@@ -27,7 +27,7 @@ void serial_init(void) {
     UART_PSELRXD = RX;
     UART_ENABLE = UART_ENABLE_Enabled;
     UART_TXDRDY = 0;
-    UART_STARTRX = 1;
+    UART_STARTTX = 1;
 
     // Interrupt for transmit only
     UART_INTENSET = BIT(UART_INT_TXDRDY);
