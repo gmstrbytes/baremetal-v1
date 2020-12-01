@@ -14,7 +14,7 @@ if [ x$BASH_VERSION = x ]; then exec /bin/bash $0; fi
 # Make sure we're not running as root
 if [ $(whoami) = root ]; then echo "Please don't run as root"; exit 1; fi
 
-web=https://github.com/Spivoxity/geany-mods/releases/download/v0.2
+web=https://github.com/Spivoxity/geany-mods/releases/download/v0.3
 arch=$(dpkg --print-architecture)
 gver=spivoxity3
 pkgs="geany-common_1.33-1-${gver}_all.deb geany_1.33-1-${gver}_$arch.deb"
