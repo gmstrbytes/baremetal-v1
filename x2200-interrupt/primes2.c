@@ -1,4 +1,4 @@
-// x2100-serial/primes.c
+// x2200-interrupt/primes.c
 // Copyright (c) 2018 J. M. Spivey
 
 #include "hardware.h"
@@ -9,7 +9,13 @@
 #define TX USB_TX
 #define RX USB_RX
 
-int txinit;              // UART ready to transmit first char
+#define NBUF 64
+
+static volatile int txidle;       // Whether UART is idle
+static volatile int bufcnt = 0;   // Number of chars in buffer
+static unsigned bufin = 0;        // Index of first free slot
+static unsigned bufout = 0;       // Index of first occupied slot
+static volatile char txbuf[NBUF]; // The buffer
 
 /* serial_init -- set up UART connection to host */
 void serial_init(void) {
@@ -21,18 +27,41 @@ void serial_init(void) {
     UART_PSELRXD = RX;
     UART_ENABLE = UART_ENABLE_Enabled;
     UART_TXDRDY = 0;
-    UART_STARTTX = 1;
-    txinit = 1;
+    UART_STARTRX = 1;
+
+    // Interrupt for transmit only
+    UART_INTENSET = BIT(UART_INT_TXDRDY);
+    enable_irq(UART_IRQ);
+    txidle = 1;
+}
+
+void uart_handler(void) {
+    if (UART_TXDRDY) {
+        UART_TXDRDY = 0;
+        if (bufcnt == 0)
+            txidle = 1;
+        else {
+            UART_TXD = txbuf[bufout];
+            bufcnt--;
+            bufout = (bufout+1) % NBUF;
+        }
+    }
 }
 
 /* serial_putc -- send output character */
 void serial_putc(char ch) {
-    if (! txinit) {
-        while (! UART_TXDRDY) { }
+    while (bufcnt == NBUF) pause();
+
+    intr_disable();
+    if (txidle) {
+        UART_TXD = ch;
+        txidle = 0;
+    } else {
+        txbuf[bufin] = ch;
+        bufcnt++;
+        bufin = (bufin+1) % NBUF;
     }
-    txinit = 0;
-    UART_TXDRDY = 0;
-    UART_TXD = ch;
+    intr_enable();
 }
 
 /* putbuf -- output routine for use by printf */
@@ -77,7 +106,11 @@ void stop_timer(void) {
     // Fetch timer result
     TIMER0_CAPTURE[0] = 1;
     unsigned time1 = TIMER0_CC[0];
-    printf("%d millisec\n", (time1+500)/1000);
+    while (bufcnt > 0) pause();
+    TIMER0_CAPTURE[0] = 1;
+    unsigned time2 = TIMER0_CC[0];
+    printf("%d+%d millisec\n",
+           (time1+500)/1000, (time2-time1+500)/1000);
 }
 
 void init(void) {
