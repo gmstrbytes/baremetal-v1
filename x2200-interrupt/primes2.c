@@ -1,4 +1,4 @@
-// x2200-interrupt/primes.c
+// x2200-interrupt/primes2.c
 // Copyright (c) 2018 J. M. Spivey
 
 #include "hardware.h"
