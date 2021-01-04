@@ -83,8 +83,8 @@ void serial_getline(const char *prompt, char *buf, int nbuf) {
     }
 }
 
-/* putbuf -- output routine for use by printf */
-void putbuf(char *buf, int n) {
+/* print_buf -- output routine for use by printf */
+void print_buf(char *buf, int n) {
     for (int i = 0; i < n; i++) {
         char c = buf[i];
         if (c == '\n') serial_putc('\r');

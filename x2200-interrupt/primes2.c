@@ -17,6 +17,23 @@ static unsigned bufin = 0;        // Index of first free slot
 static unsigned bufout = 0;       // Index of first occupied slot
 static volatile char txbuf[NBUF]; // The buffer
 
+/* buf_put -- add character to buffer */
+void buf_put(char ch) {
+    assert(bufcnt < NBUF);
+    txbuf[bufin] = ch;
+    bufcnt++;
+    bufin = (bufin+1) % NBUF;
+}
+
+/* buf_get -- fetch character from buffer */
+char buf_get(void) {
+    assert(bufcnt > 0);
+    char ch = txbuf[bufout];
+    bufcnt--;
+    bufout = (bufout+1) % NBUF;
+    return ch;
+}
+
 /* serial_init -- set up UART connection to host */
 void serial_init(void) {
     UART_ENABLE = UART_ENABLE_Disabled;
@@ -35,16 +52,14 @@ void serial_init(void) {
     txidle = 1;
 }
 
+/* uart_handler -- interrupt handler for UART */
 void uart_handler(void) {
     if (UART_TXDRDY) {
         UART_TXDRDY = 0;
         if (bufcnt == 0)
             txidle = 1;
-        else {
-            UART_TXD = txbuf[bufout];
-            bufcnt--;
-            bufout = (bufout+1) % NBUF;
-        }
+        else
+            UART_TXD = buf_get();
     }
 }
 
@@ -57,15 +72,13 @@ void serial_putc(char ch) {
         UART_TXD = ch;
         txidle = 0;
     } else {
-        txbuf[bufin] = ch;
-        bufcnt++;
-        bufin = (bufin+1) % NBUF;
+        buf_put(ch);
     }
     intr_enable();
 }
 
-/* putbuf -- output routine for use by printf */
-void putbuf(char *buf, int n) {
+/* print_buf -- output routine for use by printf */
+void print_buf(char *buf, int n) {
     for (int i = 0; i < n; i++) {
         char c = buf[i];
         if (c == '\n') serial_putc('\r');

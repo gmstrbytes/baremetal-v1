@@ -203,6 +203,7 @@ static void serial_task(int arg) {
 
     UART_INTENSET = BIT(UART_INT_RXDRDY) | BIT(UART_INT_TXDRDY);
     connect(UART_IRQ);
+    enable_irq(UART_IRQ);
 #endif
 
 #ifdef KL25Z
@@ -235,6 +236,7 @@ static void serial_task(int arg) {
     SET_BIT(UART0_C2, UART_C2_RIE);
     enable_irq(UART0_IRQ);
     connect(UART0_IRQ);
+    enable_irq(UART0_IRQ);
 #endif
 
     txidle = 1;
@@ -296,14 +298,16 @@ void serial_putc(char ch) {
 /* serial_getc -- request an input character */
 char serial_getc(void) {
     message m;
-    sendrec(SERIAL, GETC, &m);
+    send(SERIAL, GETC, NULL);
+    receive(REPLY, &m);
     return m.m_i1;
 }
 
-/* putbuf -- output routine for use by printf */
-void putbuf(char *buf, int n) {
+/* print_buf -- output routine for use by printf */
+void print_buf(char *buf, int n) {
     message m;
     m.m_p1 = buf;
     m.m_i2 = n;
-    sendrec(SERIAL, PUTBUF, &m);
+    send(SERIAL, PUTBUF, &m);
+    receive(REPLY, NULL);
 }

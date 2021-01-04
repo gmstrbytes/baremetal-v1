@@ -1,7 +1,7 @@
 # microbian/Makefile
 # Copyright (c) 2020 J. M. Spivey
 
-all: microbian.a
+all: microbian.a startup.o
 
 CPU = -mcpu=cortex-m0 -mthumb
 CFLAGS = -O -g -Wall -ffreestanding
@@ -9,9 +9,9 @@ CC = arm-none-eabi-gcc
 AS = arm-none-eabi-as
 AR = arm-none-eabi-ar
 
-DRIVERS = timer.o serial.o i2c.o radio.o
+DRIVERS = timer.o serial.o i2c.o radio.o display.o
 
-MICROBIAN = microbian.o mpx-m0.o $(DRIVERS) lib.o startup.o
+MICROBIAN = microbian.o mpx-m0.o $(DRIVERS) lib.o
 
 microbian.a: $(MICROBIAN)
 	$(AR) cr $@ $^
@@ -31,4 +31,4 @@ force:
 
 ###
 
-$(MICROBIAN): microbian.h hardware.h lib.h
+$(MICROBIAN) startup.o: microbian.h hardware.h lib.h

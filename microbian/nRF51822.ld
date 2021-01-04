@@ -51,7 +51,7 @@ SECTIONS {
         PROVIDE(swi5_handler = default_handler);
     } > FLASH
 
-    .data : AT (__etext) {
+    .data : AT (LOADADDR(.text) + SIZEOF(.text)) {
         __data_start = .;
         *(.data*)
         . = ALIGN(4);

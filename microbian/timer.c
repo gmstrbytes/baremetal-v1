@@ -81,7 +81,7 @@ static void timer_task(int n) {
     message m;
 
     /* We use Timer 1 because its 16-bit mode is adequate for a clock
-       with up to 1us resulution and 1ms period, leaving the 32-bit
+       with up to 1us resolution and 1ms period, leaving the 32-bit
        Timer 0 for other purposes. */
 
     TIMER1_STOP = 1;
@@ -100,8 +100,6 @@ static void timer_task(int n) {
 
         switch (m.m_type) {
         case INTERRUPT:
-            disable_irq(TIMER1_IRQ);
-            enable_irq(TIMER1_IRQ);
             check_timers();
             break;
 

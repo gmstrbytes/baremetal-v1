@@ -124,7 +124,7 @@ static void f_printc(void *q, char c) {
 
 /* f_storec -- use q as a character pointer */
 void f_storec(void *q, char c) {
-    char **p = (char **) q;
+    char **p = q;
     *(*p)++ = c;
 }
 
@@ -147,16 +147,16 @@ int sprintf(char *buf, const char *fmt, ...) {
 
 /* To reduce the number of context switches needed when printf runs
    under micro:bian, it maintains a small internal buffer that is
-   flushed just before printf returns: unlike the usual buffering,
-   there is no need for fflush(stdout), something that makes things
-   easier for beginners.  This buffer complicates the behaviour of the
-   'chaos' example: don't be tempted to make the buffer bigger, or all
-   chaos will be removed!  Clients other than micro:bian see no
-   benefit from the buffering because putbuf is implemented by
+   flushed just before printf returns: unlike the usual buffering
+   scheme, there is no need for fflush(stdout), something that makes
+   things easier for beginners.  This buffer complicates the behaviour
+   of the 'chaos' example: don't be tempted to make the buffer bigger,
+   or all chaos will be removed!  Clients other than micro:bian see no
+   benefit from the buffering because print_buf is implemented by
    repeated calls to serial_putc. */
 
-/* putbuf -- must be provided by client */
-extern void putbuf(char *buf, int n);
+/* print_buf -- must be provided by client */
+extern void print_buf(char *buf, int n);
 
 #define NBUF 16
 
@@ -166,22 +166,21 @@ struct buffer {
 };
     
 static void flush(struct buffer *b) {
-    putbuf(b->buf, b->nbuf);
+    print_buf(b->buf, b->nbuf);
     b->nbuf = 0;
 }
 
 static void f_bufferc(void *q, char c) {
-    struct buffer *b = (struct buffer *) q;
+    struct buffer *b = q;
     if (b->nbuf == NBUF) flush(b);
     b->buf[b->nbuf++] = c;
 }
 
-/* printf -- print using client-supplid putbuf */
+/* printf -- print using client-supplied print_buf */
 void printf(const char *fmt, ...) {
-    struct buffer b;
-
-    b.nbuf = 0;
     va_list va;
+    struct buffer b;
+    b.nbuf = 0;
     va_start(va, fmt);
     _do_print(f_bufferc, &b, fmt, va);
     va_end(va);

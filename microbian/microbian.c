@@ -137,7 +137,8 @@ static struct queue {
 } os_readyq[NPRIO];
 
 /* make_ready -- add process to end of appropriate queue */
-static inline void make_ready(struct proc *p, int prio) {
+static inline void make_ready(struct proc *p) {
+    int prio = p->p_priority;
     if (prio == P_IDLE) return;
 
     p->p_state = ACTIVE;
@@ -207,6 +208,39 @@ static inline void enqueue(struct proc *pdest) {
     }
 }
 
+/* find_sender -- search process queue for acceptable sender */
+static struct proc *find_sender(struct proc *pdst, int type) {
+    struct proc *psrc, *prev = NULL;
+        
+    for (psrc = pdst->p_waiting; psrc != NULL; psrc = psrc->p_next) {
+        if (type == ANY || psrc->p_msgtype == type) {
+            if (prev == NULL)
+                pdst->p_waiting = psrc->p_next;
+            else
+                prev->p_next = psrc->p_next;
+
+            return psrc;
+        }
+
+        prev = psrc;
+    }
+
+    return NULL;
+}
+
+/* await_reply -- wait for reply after sendrec */
+static void await_reply(struct proc *pdst) {
+    struct proc *psrc = find_sender(pdst, REPLY);
+    if (psrc != NULL) {
+        /* Unlikely but not impossible: a REPLY message is already waiting */
+        deliver(pdst->p_message, psrc->p_pid, REPLY, psrc->p_message);
+        make_ready(pdst);
+        make_ready(psrc);
+    } else {
+        set_state(pdst, RECEIVING, REPLY, pdst->p_message);
+    }
+}
+
 /* mini_send -- send a message */
 static void mini_send(int dest, int type, message *msg) {
     int src = os_current->p_pid;
@@ -216,15 +250,17 @@ static void mini_send(int dest, int type, message *msg) {
         panic("Sending to a non-existent process %d", dest);
 
     if (accept(pdest, type)) {
-        // Receiver is waiting for us
+        // Receiver is waiting: deliver the message and run receiver
         deliver(pdest->p_message, src, type, msg);
-        make_ready(pdest, pdest->p_priority);
+        make_ready(pdest);
+        make_ready(os_current);
     } else {
         // Sender must wait by joining the receiver's queue
         set_state(os_current, SENDING, type, msg);
         enqueue(pdest);
-        choose_proc();
     }
+
+    choose_proc();
 }
 
 /* mini_receive -- receive a message */
@@ -236,30 +272,29 @@ static void mini_receive(int type, message *msg) {
         return;
     }
 
+    // Now see if a sender is waiting
     if (type != INTERRUPT) {
-        // Now look for a process waiting to send an accepable message
-        struct proc *psrc, *prev = NULL;
-        
-        for (psrc = os_current->p_waiting; psrc != NULL;
-             psrc = psrc->p_next) {            
-            if (type == ANY || psrc->p_msgtype == type) {
-                if (prev == NULL)
-                    os_current->p_waiting = psrc->p_next;
-                else
-                    os_current->p_next = psrc->p_next;
+        struct proc *psrc = find_sender(os_current, type);
 
-                deliver(msg, psrc->p_pid, psrc->p_msgtype, psrc->p_message);
-                if (psrc->p_state == SENDING)
-                    make_ready(psrc, psrc->p_priority);
-                else {
-                    // After sending, a SENDREC process waits for a reply.
-                    assert(psrc->p_state == SENDREC);
-                    set_state(psrc, RECEIVING, REPLY, msg);
-                }
-                return;
+        if (psrc != NULL) {
+            deliver(msg, psrc->p_pid, psrc->p_msgtype, psrc->p_message);
+            make_ready(os_current);
+
+            switch (psrc->p_state) {
+            case SENDING:
+                make_ready(psrc);
+                break;
+
+            case SENDREC:
+                await_reply(psrc);
+                break;
+
+            default:
+                panic("Bad state in receive()");
             }
 
-            prev = psrc;
+            choose_proc();
+            return;
         }
     }
 
@@ -268,29 +303,30 @@ static void mini_receive(int type, message *msg) {
     choose_proc();
 }    
 
+/* mini_sendrec -- send a message and wait for reply */
 static void mini_sendrec(int dest, int type, message *msg) {
     int src = os_current->p_pid;
     struct proc *pdest = os_ptable[dest];
+
+    if (type == REPLY)
+        panic("sendrec may not be used to send REPLY message");
 
     if (dest < 0 || dest >= os_nprocs || pdest->p_state == DEAD)
         panic("Sending to a non-existent process %d", dest);
 
     if (accept(pdest, type)) {
-        // Receiver is waiting for us
+        // Send the message and wait for a reply
         deliver(pdest->p_message, src, type, msg);
-        make_ready(pdest, pdest->p_priority);
-
-        // Now we must wait for a reply
-        set_state(os_current, RECEIVING, REPLY, msg);
+        make_ready(pdest);
+        await_reply(os_current);
     } else {
-        // Sender must wait by joining the receiver's queue
+        // Join receiver's queue
         set_state(os_current, SENDREC, type, msg);
         enqueue(pdest);
     }
 
     choose_proc();
-}    
-
+}
 
 /* INTERRUPT HANDLING */
 
@@ -309,7 +345,6 @@ void connect(int irq) {
     if (irq < 0) panic("Can't connect to CPU exceptions");
     os_current->p_priority = P_HANDLER;
     os_handler[irq] = os_current->p_pid;
-    enable_irq(irq);
 }
 
 /* priority -- set process priority */
@@ -326,8 +361,8 @@ void interrupt(int dest) {
         // Receiver is waiting for an interrupt
         deliver(pdest->p_message, HARDWARE, INTERRUPT, NULL);
 
-        make_ready(pdest, P_HANDLER);
-        if (os_current->p_priority > 0) {
+        make_ready(pdest);
+        if (os_current->p_priority > P_HANDLER) {
             // Preempt lower-priority process
             reschedule();
         }
@@ -342,7 +377,7 @@ void interrupt(int dest) {
    handler task.  Normally the handler task will deal with the cause of the
    interrupt, then re-enable it. */
 
-/* default_handler -- handle for most interrupts */
+/* default_handler -- handler for most interrupts */
 void default_handler(void) {
     int irq = active_irq(), task;
     if (irq < 0 || (task = os_handler[irq]) == 0)
@@ -435,7 +470,7 @@ int start(char *name, void (*body)(int), int arg, int stksize) {
     sp[ERV_SAVE] = MAGIC;
     p->p_sp = sp;
 
-    make_ready(p, p->p_priority);
+    make_ready(p);
     return p->p_pid;
 }
 
@@ -482,9 +517,13 @@ unsigned *system_call(unsigned *psp) {
     // Save sp of the current process
     os_current->p_sp = psp;
 
+    // Check for stack overflow
+    if (* (unsigned *) os_current->p_stack != BLANK)
+        panic("Stack overflow");
+
     switch (op) {
     case SYS_YIELD:
-        make_ready(os_current, os_current->p_priority);
+        make_ready(os_current);
         choose_proc();
         break;
 
@@ -523,7 +562,7 @@ unsigned *system_call(unsigned *psp) {
 /* cxt_switch -- context switch following interrupt */
 unsigned *cxt_switch(unsigned *psp) {
     os_current->p_sp = psp;
-    make_ready(os_current, os_current->p_priority);
+    make_ready(os_current);
     choose_proc();
     return os_current->p_sp;
 }

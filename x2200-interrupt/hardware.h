@@ -598,7 +598,9 @@ inline unsigned gpio_in(unsigned pin) {
 
 /* Image constants */
 
-typedef unsigned image[3];
+#define NIMG 3
+
+typedef unsigned image[NIMG];
 
 #define __ROW(r, c1, c2, c3, c4, c5, c6, c7, c8, c9)                   \
     (BIT(r+13) | !c1<<4 | !c2<<5 | !c3<<6 | !c4<<7 | !c5<<8            \
@@ -618,10 +620,13 @@ typedef unsigned image[3];
 #define led_off()   GPIO_OUTCLR = 0x0000fff0;
 
 
+/* CODERAM -- mark function for copying to RAM (disabled on V1) */
+#define CODERAM
+
 /* One assembler macro -- forgive me! */
 #define pause()         asm volatile ("wfe")
 
-/* OK: three more.  But note that micro:be uses lock/unlock in mpx.s */
+/* OK: three more.  But note that micro:bian uses lock/unlock in mpx.s */
 #define intr_disable()  asm volatile ("cpsid i")
 #define intr_enable()   asm volatile ("cpsie i")
 #define nop()           asm volatile ("nop")

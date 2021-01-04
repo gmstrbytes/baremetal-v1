@@ -109,6 +109,7 @@ static void i2c_task(int j) {
     I2C[j].I_INTEN = BIT(I2C_INT_RXDREADY) | BIT(I2C_INT_TXDSENT)
         | BIT(I2C_INT_STOPPED) | BIT(I2C_INT_ERROR);
     connect(i2c_pins[j].irq);
+    enable_irq(i2c_pins[j].irq);
 
     while (1) {
         receive(ANY, &m);
@@ -187,7 +188,8 @@ int i2c_xfer(int j, int kind, int addr,
     m.m_b3 = n2;
     m.m_p2 = buf1;
     m.m_p3 = buf2;
-    sendrec(I2C_TASK[j], kind, &m);
+    send(I2C_TASK[j], kind, &m);
+    receive(REPLY, &m);
     return m.m_i1;
 }
 

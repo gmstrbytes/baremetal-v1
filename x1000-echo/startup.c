@@ -17,10 +17,6 @@ void os_start(void);
 void os_interrupt(int irq);
 #endif
 
-/* Addresses set by the linker */
-extern unsigned char __data_start[], __data_end[],
-    __bss_start[], __bss_end[], __etext[], __stack[];
-
 /* The next four routines can be used in C compiler output, even
    if not mentioned in the source. */
 
@@ -61,6 +57,10 @@ int memcmp(const void *pp, const void *qq, int n) {
     }
     return 0;
 }
+
+/* Addresses set by the linker */
+extern unsigned char __data_start[], __data_end[],
+    __bss_start[], __bss_end[], __etext[], __stack[];
 
 /* __reset -- the system starts here */
 void __reset(void) {

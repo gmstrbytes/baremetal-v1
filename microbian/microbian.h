@@ -36,7 +36,7 @@ typedef struct {                // 16 bytes
     union {                     // Three words of data, each
         int m_i;                // ... an integer
         void *m_p;              // ... or some kind of pointer
-        struct {                // ... of four bytes
+        struct {                // ... or four bytes
             byte m_bw, m_bx, m_by, m_bz;
         } m_b;
     } m_x1, m_x2, m_x3;
@@ -130,23 +130,9 @@ void radio_send(void *buf, int n);
 int radio_receive(void *buf);
 void radio_init(void);
 
-/* adc.c */
-int adc_reading(int chan);
-void adc_init(void);
-
-/* temp.c */
-int temp_reading(void);
-void temp_init(void);
-
-/* random.c */
-unsigned randint(void);
-unsigned randbyte(void);
-void random_init(void);
-
 /* display.c */
 void display_set(const unsigned *img);
 void display_init(void);
 
-extern const unsigned blank_image[];
 void image_clear(unsigned *img);
 void image_set(int x, int y, unsigned *img);

@@ -84,6 +84,7 @@ static void radio_task(int dummy) {
 
     init_radio();
     connect(RADIO_IRQ);
+    enable_irq(RADIO_IRQ);
 
     while (1) {
         receive(ANY, &m);
