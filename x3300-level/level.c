@@ -11,7 +11,7 @@ void light(int x, int y) {
     image screen;
     image_clear(screen);
     image_set(x, y, screen);
-    display_set(screen);
+    display_show(screen);
 }
 
 /* scale -- map acceleration to coordinate */

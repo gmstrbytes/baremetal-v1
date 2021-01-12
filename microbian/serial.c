@@ -308,6 +308,5 @@ void print_buf(char *buf, int n) {
     message m;
     m.m_p1 = buf;
     m.m_i2 = n;
-    send(SERIAL, PUTBUF, &m);
-    receive(REPLY, NULL);
+    sendrec(SERIAL, PUTBUF, &m);
 }

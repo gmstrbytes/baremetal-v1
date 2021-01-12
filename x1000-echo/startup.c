@@ -6,16 +6,12 @@
 /* init -- main program, creates application processes */
 void init(void);
 
-#ifdef MICROBIAN
-/* os_init -- hook to set up scheduler data structures */
-void os_init(void);
+void default_start(void) {
+    init();                    // Call the main program.
+    while (1) pause();         // Halt if init() returns
+}
 
-/* os_start -- hook to start process execution */
-void os_start(void);
-
-/* os_interrupt -- general interrupt handler */
-void os_interrupt(int irq);
-#endif
+void __start(void) __attribute((weak, alias("default_start")));
 
 /* The next four routines can be used in C compiler output, even
    if not mentioned in the source. */
@@ -74,14 +70,7 @@ void __reset(void) {
     memcpy(__data_start, __etext, __data_end - __data_start);
     memset(__bss_start, 0, __bss_end - __bss_start);
 
-#ifdef MICROBIAN
-    os_init();                 // Initialise the scheduler.
-    init();                    // Let the program initialise itself.
-    os_start();                // Start the scheduler -- never returns.
-#else
-    init();                    // Call the main program.
-    while (1) pause();         // Halt if it returns.
-#endif
+    __start();
 }
 
 

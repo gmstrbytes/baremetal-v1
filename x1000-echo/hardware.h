@@ -7,9 +7,10 @@
 /* Hardware register definitions for nRF51822 */
 
 #define BIT(i) (1 << (i))
-#define SET_BIT(reg, n) reg |= BIT(n)
 #define GET_BIT(reg, n) (((reg) >> (n)) & 0x1)
+#define SET_BIT(reg, n) reg |= BIT(n)
 #define CLR_BIT(reg, n) reg &= ~BIT(n)
+
 #define GET_BYTE(reg, n) (((reg) >> (8*(n))) & 0xff)
 #define SET_BYTE(reg, n, v) \
     reg = (reg & ~(0xff << 8*n)) | ((v & 0xff) << 8*n)
@@ -38,7 +39,7 @@ argument to be a macro that expands the a 'position, width' pair. */
 
 /* Device pins */
 #define PAD19 0
-#define  I2C_SCL 0
+#define  I2C_SCL PAD19
 #define PAD2 1
 #define PAD1 2
 #define PAD0 3
@@ -52,23 +53,25 @@ argument to be a macro that expands the a 'position, width' pair. */
 /* LED rows are GPIO 13-15 */
 #define PAD16 16
 #define PAD5 17
-#define  BUTTON_A 17
+#define  BUTTON_A PAD5
 #define PAD8 18
 #define PAD12 20
-#define  SPI_MOSI 21
 #define PAD15 21
-#define  SPI_MISO 22
+#define   SPI_MOSI PAD15
 #define PAD14 22
-#define  SPI_SCK 23
+#define  SPI_MISO PAD14
 #define PAD13 23
-#define  USB_TX 24
-#define  USB_RX 25
+#define  SPI_SCK PAD13
+#define USB_TX 24
+#define USB_RX 25
 #define PAD11 26
-#define  BUTTON_B 26
+#define  BUTTON_B PAD11
 #define PAD20 30
-#define  I2C_SDA 30
+#define  I2C_SDA PAD20
 
-#define EXT_I2C 0
+// Only one I2C interface
+#define I2C_INTERNAL 0
+#define I2C_EXTERNAL 0
 
 
 /* Interrupts */
@@ -84,6 +87,7 @@ argument to be a macro that expands the a 'position, width' pair. */
 #define TIMER2_IRQ 10
 #define TEMP_IRQ   12
 #define RNG_IRQ    13
+
 
 /* System registers */
 #define SCB_CPUID               ADDR(0xe000ed00)
@@ -118,11 +122,13 @@ argument to be a macro that expands the a 'position, width' pair. */
 
 #define MPU_DISABLEINDEBUG ADDR(0x40000608)
 
+
 /* Factory information */
 #define FICR_DEVICEID  ARRAY(0x10000060)
 #define FICR_OVERRIDEEN ADDR(0x100000a0)
 #define FICR_OVERRIDEEN_NRF 0
 #define FICR_NRF_1MBIT ARRAY(0x100000b0)
+
 
 /* Non-Volatile Memory Controller */
 #define NVMC_READY               ADDR(0x4001e400)
@@ -162,6 +168,7 @@ argument to be a macro that expands the a 'position, width' pair. */
 #define     GPIO_SENSE_High 2
 #define     GPIO_SENSE_Low 3
 
+
 /* GPIOTE */
 // Tasks
 #define GPIOTE_OUT              ARRAY(0x40006000)
@@ -188,6 +195,7 @@ argument to be a macro that expands the a 'position, width' pair. */
 #define GPIOTE_INT_IN2 2
 #define GPIOTE_INT_IN3 3
 #define GPIOTE_INT_PORT 31
+
 
 /* PPI */
 struct _ppi_chg {
@@ -388,6 +396,7 @@ union _timer {
 // Interrupts
 #define RNG_INT_VALRDY 0
 
+
 /* Temperature sensor */
 // Tasks
 #define TEMP_START               ADDR(0x4000C000)
@@ -401,6 +410,7 @@ union _timer {
 #define TEMP_TEMP                ADDR(0x4000C508)
 // Interrupts
 #define TEMP_INT_DATARDY 0
+
 
 /* I2C -- Interface 0 */
 union _i2c {
@@ -500,6 +510,7 @@ union _i2c {
 // Interrupts
 #define UART_INT_RXDRDY 2
 #define UART_INT_TXDRDY 7
+
 
 /* ADC */
 // Tasks

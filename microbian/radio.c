@@ -6,8 +6,8 @@
 #include <string.h>
 
 /* Modes:
-    DISABLED -- doing nothing
-    IDLE -- initialised for reception
+    DISABLED  -- doing nothing
+    READY     -- initialised for reception
     LISTENING -- waiting for a packet, DMA already set up */
 #define DISABLED 0
 #define READY 1
@@ -28,12 +28,13 @@ static struct radio_frame {
     byte data[RADIO_PACKET];
 } packet_buffer;
 
+static volatile int group = 0;
+
 static void init_radio() {
     RADIO_TXPOWER = 0; // Default transmit power
     RADIO_FREQUENCY = FREQ;
     RADIO_MODE = RADIO_MODE_NRF_1Mbit;
     RADIO_BASE0 = 0x75626974; // That spells 'ubit'.
-    RADIO_PREFIX0 = 0; // Group 0
     RADIO_TXADDRESS = 0;
     RADIO_RXADDRESSES = BIT(0);
 
@@ -80,6 +81,7 @@ static void radio_task(int dummy) {
     int mode = DISABLED;
     int listener = 0, n;
     void *buffer = NULL;
+    int rgroup = 0;
     message m;
 
     init_radio();
@@ -96,9 +98,12 @@ static void radio_task(int dummy) {
             RADIO_END = 0;
             clear_pending(RADIO_IRQ);
             enable_irq(RADIO_IRQ);
-            if (RADIO_CRCSTATUS == 0)
-                // Ignore corrupted packets
+
+            if (RADIO_CRCSTATUS == 0 || packet_buffer.group != rgroup) {
+                // Ignore the packet and listen again
+                RADIO_START = 1;
                 break;
+            }
 
             n = packet_buffer.length-3;
             memcpy(buffer, packet_buffer.data, n);
@@ -112,13 +117,14 @@ static void radio_task(int dummy) {
             if (mode == LISTENING)
                 panic("radio supports only one listener at a time");
             listener = m.m_sender;
-            buffer = m.m_p1;
+            buffer = m.m_p2;
 
             if (mode == DISABLED) {
                 RADIO_RXEN = 1;
                 await(&RADIO_READY);
             }
 
+            RADIO_PREFIX0 = rgroup = group;
             RADIO_START = 1;
             mode = LISTENING;
             break;
@@ -134,13 +140,14 @@ static void radio_task(int dummy) {
             n = m.m_i2;
             packet_buffer.length = n+3;
             packet_buffer.version = 1;
-            packet_buffer.group = 0;
+            packet_buffer.group = group;
             packet_buffer.protocol = 1; // Agrees with uBit datagrams
             memcpy(packet_buffer.data, m.m_p1, n);
 
             // Enable for sending and transmit the packet
             RADIO_TXEN = 1;
             await(&RADIO_READY);
+            RADIO_PREFIX0 = group;
             RADIO_START = 1;
             await(&RADIO_END);
 
@@ -154,6 +161,7 @@ static void radio_task(int dummy) {
                 // Go back to listening
                 RADIO_RXEN = 1;
                 await(&RADIO_READY);
+                RADIO_PREFIX0 = rgroup;
                 RADIO_START = 1;
             }
 
@@ -167,6 +175,10 @@ static void radio_task(int dummy) {
 }
 
 static int RADIO;
+
+void radio_group(int grp) {
+    group = grp;
+}
 
 void radio_send(void *buf, int n) {
     message m;

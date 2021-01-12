@@ -16,8 +16,6 @@ MICROBIAN = microbian.o mpx-m0.o $(DRIVERS) lib.o
 microbian.a: $(MICROBIAN)
 	$(AR) cr $@ $^
 
-startup.o: CFLAGS += -DMICROBIAN
-
 %.o: %.c
 	$(CC) $(CPU) $(CFLAGS) -c $< -o $@ 
 

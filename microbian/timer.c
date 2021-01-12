@@ -17,7 +17,7 @@
 /* Millis will overflow in about 46 days, but that's long enough. */
 static unsigned millis = 0;
 
-struct {
+static struct {
     int client;        // Process that receives message, or -1 if free
     unsigned period;   // Interval between messages, or 0 for one-shot
     unsigned next;     // Next time to send a message
@@ -29,7 +29,8 @@ static void check_timers(void) {
     message m;
 
     for (i = 0; i < MAX_TIMERS; i++) {
-        if (timer[i].client >= 0 && millis >= timer[i].next) {
+        // Delay for an extra tick to make sure of not firing early
+        if (timer[i].client >= 0 && millis >= timer[i].next + TICK) {
             m.m_i1 = timer[i].next;
             send(timer[i].client, PING, &m);
 
@@ -62,12 +63,8 @@ static void create(int client, int delay, int repeat) {
 
 static int TIMER_TASK;
 
-/* timer1_handler is marked as a weak symbol so that this module won't
-   be linked merely in order to resolve the reference to it from the
-   vector table.  */
-
 /* timer1_handler -- interrupt handler */
-void __attribute__((weak)) timer1_handler(void) {
+void timer1_handler(void) {
     // Update the time here so it is accessible to timer_micros
 
     if (TIMER1_COMPARE[0]) {
@@ -81,7 +78,7 @@ static void timer_task(int n) {
     message m;
 
     /* We use Timer 1 because its 16-bit mode is adequate for a clock
-       with up to 1us resolution and 1ms period, leaving the 32-bit
+       with up to 1us resolution and 5ms period, leaving the 32-bit
        Timer 0 for other purposes. */
 
     TIMER1_STOP = 1;

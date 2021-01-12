@@ -126,12 +126,13 @@ void i2c_init(int j);
 /* radio.c */
 #define RADIO_PACKET 32
 
+void radio_group(int group);
 void radio_send(void *buf, int n);
 int radio_receive(void *buf);
 void radio_init(void);
 
 /* display.c */
-void display_set(const unsigned *img);
+void display_show(const unsigned *img);
 void display_init(void);
 
 void image_clear(unsigned *img);

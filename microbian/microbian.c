@@ -44,28 +44,27 @@ neighbour. */
 
 extern unsigned char __stack_limit[], __end[];
 
-static unsigned char *__break = __end;
-static unsigned char *__break2 = __stack_limit;
+static unsigned char *hbot = __end;
+static unsigned char *htop = __stack_limit;
 
 #define ROUNDUP(x, n)  (((x)+(n)-1) & ~((n)-1))
 
 static void *sbrk(int inc) {
-    __break = (unsigned char *) ROUNDUP((unsigned) __break, 8);
+    hbot = (unsigned char *) ROUNDUP((unsigned) hbot, 8);
     inc = ROUNDUP(inc, 8);
 
-    if (inc > __break2 - __break)
-        panic("Phos is out of memory");
-    void *result = __break;
-    __break += inc;
+    if (inc > htop - hbot)
+        panic("Microbian is out of memory");
+    void *result = hbot;
+    hbot += inc;
     return result;
 }
 
 static struct proc *new_proc(void) {
-    if (__break2 - __break < sizeof(struct proc))
-        panic("No space for process %u %u",
-              (unsigned) __break, (unsigned) __break2);
-    __break2 -= sizeof(struct proc);
-    return (struct proc *) __break2;
+    if (htop - hbot < sizeof(struct proc))
+        panic("No space for process");
+    htop -= sizeof(struct proc);
+    return (struct proc *) htop;
 }
 
 
@@ -229,15 +228,15 @@ static struct proc *find_sender(struct proc *pdst, int type) {
 }
 
 /* await_reply -- wait for reply after sendrec */
-static void await_reply(struct proc *pdst) {
+static void await_reply(struct proc *pdst, message *msg) {
     struct proc *psrc = find_sender(pdst, REPLY);
     if (psrc != NULL) {
         /* Unlikely but not impossible: a REPLY message is already waiting */
-        deliver(pdst->p_message, psrc->p_pid, REPLY, psrc->p_message);
+        deliver(pdst->p_message, psrc->p_pid, REPLY, msg);
         make_ready(pdst);
         make_ready(psrc);
     } else {
-        set_state(pdst, RECEIVING, REPLY, pdst->p_message);
+        set_state(pdst, RECEIVING, REPLY, msg);
     }
 }
 
@@ -286,7 +285,7 @@ static void mini_receive(int type, message *msg) {
                 break;
 
             case SENDREC:
-                await_reply(psrc);
+                await_reply(psrc, psrc->p_message);
                 break;
 
             default:
@@ -318,7 +317,7 @@ static void mini_sendrec(int dest, int type, message *msg) {
         // Send the message and wait for a reply
         deliver(pdest->p_message, src, type, msg);
         make_ready(pdest);
-        await_reply(os_current);
+        await_reply(os_current, msg);
     } else {
         // Join receiver's queue
         set_state(os_current, SENDREC, type, msg);
@@ -428,16 +427,6 @@ static struct proc *init_proc(char *name, unsigned stksize) {
     return p;
 }
 
-#define IDLE_STACK 128
-
-/* os_init -- set up initial values */
-void os_init(void) {
-    // Create idle task as process 0
-    idle_proc = init_proc("IDLE", IDLE_STACK);
-    idle_proc->p_state = IDLING;
-    idle_proc->p_priority = P_IDLE;
-}
-
 #define MAGIC 0xfffffffd        /* Magic value for exception return */
 #define INIT_PSR 0x01000000     /* Thumb bit is set */
 
@@ -477,23 +466,28 @@ int start(char *name, void (*body)(int), int arg, int stksize) {
 /* set_stack -- enter thread mode with specified stack (see mpx.s) */
 void set_stack(unsigned *sp);
 
-/* os_start -- start up the process scheduler */
-void os_start(void) {
-    // The main program morphs into the idle process.  The intial stack
-    // becomes the kernel stack, and the idle process gets its own small
-    // stack.
+/* init -- main program, creates application processes */
+void init(void);
 
+#define IDLE_STACK 128
+
+/* __start -- start the operating system */
+void __start(void) {
+    // Create idle task as process 0
+    idle_proc = init_proc("IDLE", IDLE_STACK);
+    idle_proc->p_state = IDLING;
+    idle_proc->p_priority = P_IDLE;
+
+    // Call the application's setup
+    init();
+
+    // The main program morphs into the idle process.
     os_current = idle_proc;
     set_stack(os_current->p_sp);
     yield();                    // Pick a real process to run
 
     // Idle only runs again when there's nothing to do.
-    while (1) {
-        pause();                // Wait for an interrupt
-    }
-
-    /* On micro:bit V2, pause() doesn't actually put the processor to
-       sleep, because waking up entails a long delay. */
+    while (1) pause();
 }
 
 
