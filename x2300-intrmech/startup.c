@@ -137,8 +137,8 @@ void timer1_handler(void);
 void timer2_handler(void);
 void power_clock_handler(void);
 void radio_handler(void);
-void spi0_twi0_handler(void);
-void spi1_twi1_handler(void);
+void i2c_handler(void);
+void spi_handler(void);
 void gpiote_handler(void);
 void adc_handler(void);
 void rtc0_handler(void);
@@ -182,8 +182,8 @@ void *__vectors[] __attribute((section(".vectors"))) = {
     power_clock_handler,        //  0
     radio_handler,
     uart_handler,
-    spi0_twi0_handler,
-    spi1_twi1_handler,          //  4
+    i2c_handler,
+    spi_handler,                //  4
     0,
     gpiote_handler,
     adc_handler,

@@ -37,6 +37,11 @@ argument to be a macro that expands the a 'position, width' pair. */
 #define ADDR(x) (* (unsigned volatile *) (x))
 #define ARRAY(x) ((unsigned volatile *) (x))
 
+#pragma GCC diagnostic ignored "-Warray-bounds"
+#define REG(i) reg[i>>2]
+#define ARR(i) arr[i>>2]
+
+    
 /* Device pins */
 #define PAD19 0
 #define  I2C_SCL PAD19
@@ -80,14 +85,16 @@ argument to be a macro that expands the a 'position, width' pair. */
 #define RADIO_IRQ   1
 #define UART_IRQ    2
 #define I2C_IRQ     3
+#define SPI_IRQ     4
 #define GPIOTE_IRQ  6
 #define ADC_IRQ     7
 #define TIMER0_IRQ  8
 #define TIMER1_IRQ  9
 #define TIMER2_IRQ 10
+#define RTC0_IRQ   11
 #define TEMP_IRQ   12
 #define RNG_IRQ    13
-
+#define RTC1_IRQ   17
 
 /* System registers */
 #define SCB_CPUID               ADDR(0xe000ed00)
@@ -283,9 +290,6 @@ struct _ppi_ch {
 
 
 /* TIMERS: Timer 0 is 8/16/24/32 bit, Timers 1 and 2 are 8/16 bit. */
-#define REG(i) reg[i>>2]
-#define ARR(i) arr[i>>2]
-
 union _timer {
     unsigned volatile reg[1];
     unsigned volatile arr[1][1];
@@ -626,9 +630,11 @@ typedef unsigned image[NIMG];
       __ROW(1, x21, x22, x23, x24, x25, x26, x27, 0, 0),             \
       __ROW(2, x31, x32, x33, x34, x35, x36, x37, x38, x39) }
 
-#define led_init()  GPIO_DIRSET = 0x0000fff0
-#define led_dot()   GPIO_OUTSET = 0x00005fbf
-#define led_off()   GPIO_OUTCLR = 0x0000fff0;
+#define LED_MASK 0xfff0
+
+#define led_init()  GPIO_DIRSET = LED_MASK
+#define led_dot()   GPIO_OUTSET = 0x5fbf
+#define led_off()   GPIO_OUTCLR = LED_MASK
 
 
 /* CODERAM -- mark function for copying to RAM (disabled on V1) */
