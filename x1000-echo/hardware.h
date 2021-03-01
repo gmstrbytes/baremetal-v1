@@ -77,6 +77,7 @@ argument to be a macro that expands the a 'position, width' pair. */
 // Only one I2C interface
 #define I2C_INTERNAL 0
 #define I2C_EXTERNAL 0
+#define N_I2CS 1
 
 
 /* Interrupts */
@@ -95,6 +96,8 @@ argument to be a macro that expands the a 'position, width' pair. */
 #define TEMP_IRQ   12
 #define RNG_IRQ    13
 #define RTC1_IRQ   17
+
+#define N_INTERRUPTS 32
 
 /* System registers */
 #define SCB_CPUID               ADDR(0xe000ed00)
@@ -258,11 +261,17 @@ struct _ppi_ch {
 #define RADIO_MODE               ADDR(0x40001510)
 #define   RADIO_MODE_NRF_1Mbit 0
 #define RADIO_PCNF0              ADDR(0x40001514)
+#define   RADIO_PCNF0_LFLEN 0, 3
+#define   RADIO_PCNF0_S0LEN 8, 1
+#define   RADIO_PCNF0_S1LEN 16, 4
 #define RADIO_PCNF1              ADDR(0x40001518)
-#define   RADIO_PCNF1_WHITEEN 25
-#define   RADIO_PCNF1_BALEN 16, 3
 #define   RADIO_PCNF1_MAXLEN 0, 8
 #define   RADIO_PCNF1_STATLEN 8, 8
+#define   RADIO_PCNF1_BALEN 16, 3
+#define   RADIO_PCNF1_ENDIAN 24, 1
+#define     RADIO_ENDIAN_Little 0
+#define     RADIO_ENDIAN_Big 1
+#define   RADIO_PCNF1_WHITEEN 25
 #define RADIO_BASE0              ADDR(0x4000151c)
 #define RADIO_BASE1              ADDR(0x40001520)
 #define RADIO_PREFIX0            ADDR(0x40001524)
@@ -607,7 +616,7 @@ inline void gpio_out(unsigned pin, unsigned value) {
 
 /* gpio_in -- get GPIO input bit */
 inline unsigned gpio_in(unsigned pin) {
-    return (GPIO_IN & BIT(pin)) != 0;
+    return GET_BIT(GPIO_IN, pin);
 }
 
 

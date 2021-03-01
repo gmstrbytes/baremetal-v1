@@ -13,10 +13,12 @@ void delay(unsigned n) {
     }
 }
 
+/* heart -- GPIO values for heart image */
 const unsigned heart[] = {
     0x28f0, 0x5e00, 0x8060
 };
 
+/* small -- GPIO values for small heart */
 const unsigned small[] = {
     0x2df0, 0x5fb0, 0x8af0
 };
@@ -39,6 +41,7 @@ int pressed(int button) {
     return (GPIO_IN & BIT(button)) == 0;
 }
 
+/* init -- main program */
 void init(void) {
     GPIO_DIR = 0xfff0;
     GPIO_PINCNF[BUTTON_A] = 0;

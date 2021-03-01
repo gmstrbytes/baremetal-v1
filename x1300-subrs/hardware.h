@@ -616,7 +616,7 @@ inline void gpio_out(unsigned pin, unsigned value) {
 
 /* gpio_in -- get GPIO input bit */
 inline unsigned gpio_in(unsigned pin) {
-    return (GPIO_IN & BIT(pin)) != 0;
+    return GET_BIT(GPIO_IN, pin);
 }
 
 

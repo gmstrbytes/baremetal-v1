@@ -36,7 +36,7 @@ void show(const unsigned *img, int n) {
 void heart_task(int n) {
     GPIO_DIRSET = 0xfff0;
 
-    // priority(P_HIGH);
+    priority(P_HIGH);
 
     while (1) {
         show(heart, 70);

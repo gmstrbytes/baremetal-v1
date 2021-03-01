@@ -61,14 +61,14 @@ extern unsigned char __data_start[], __data_end[],
 /* __reset -- the system starts here */
 void __reset(void) {
     // Activate the crystal clock
-    CLOCK_XTALFREQ = CLOCK_XTALFREQ_16MHz;
     CLOCK_HFCLKSTARTED = 0;
     CLOCK_HFCLKSTART = 1;
     while (! CLOCK_HFCLKSTARTED) { }
 
-    // Copy data segment and zero out bss.
-    memcpy(__data_start, __etext, __data_end - __data_start);
-    memset(__bss_start, 0, __bss_end - __bss_start);
+    int data_size = __data_end - __data_start;
+    int bss_size = __bss_end - __bss_start;
+    memcpy(__data_start, __etext, data_size);
+    memset(__bss_start, 0, bss_size);
 
     __start();
 }
@@ -78,10 +78,11 @@ void __reset(void) {
 
 /* On Cortex-M0, only the top two bits of each interrupt priority are
    implemented, but for portability priorities should be specified
-   with integers in the range [0..255]. */
+   with integers in the range [0..255].  On Cortex-M4, the top three
+   bits are implemented.*/
 
 /* irq_priority -- set priority for an IRQ to a value [0..255] */
-void irq_priority(int irq, unsigned prio) {
+inline void irq_priority(int irq, unsigned prio) {
     if (irq < 0)
         SET_BYTE(SCB_SHPR[(irq+8) >> 2], irq & 0x3, prio);
     else
