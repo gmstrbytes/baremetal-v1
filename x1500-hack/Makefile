@@ -1,18 +1,15 @@
-# x3100-sync/Makefile
+# x1500-hack/Makefile
 # Copyright (c) 2020 J. M. Spivey
 
-all: chaos.hex order.hex
+all: total.hex attack squirt
 
 CC = arm-none-eabi-gcc
 CPU = -mcpu=cortex-m0 -mthumb
 CFLAGS = -O -g -Wall -ffreestanding
-INCLUDE = -I ../microbian
 AS = arm-none-eabi-as
 LD = arm-none-eabi-ld
 SIZE = arm-none-eabi-size
 OBJCOPY = arm-none-eabi-objcopy
-
-vpath %.h ../microbian
 
 %.o: %.c
 	$(CC) $(CPU) $(CFLAGS) $(INCLUDE) -c $< -o $@
@@ -20,16 +17,20 @@ vpath %.h ../microbian
 %.o: %.s
 	$(AS) $(CPU) $< -o $@
 
-%.elf: %.o ../microbian/microbian.a ../microbian/startup.o
-	$(CC) $(CPU) $(CFLAGS) -T ../microbian/nRF51822.ld \
-		$^ -nostdlib -lgcc -lc -o $@ -Wl,-Map,$*.map
+%.elf: %.o startup.o
+	$(CC) $(CPU) $(CFLAGS) -T nRF51822.ld \
+		$^ -nostdlib -lgcc -o $@ -Wl,-Map,$*.map
 	$(SIZE) $@
 
 %.hex: %.elf
 	$(OBJCOPY) -O ihex $< $@
 
-../microbian/microbian.a:
-	$(MAKE) -C $(@D) all
+attack: attack.o
+	$(OBJCOPY) -O binary attack.o attack.bin
+	hexdump -v -e '/4 "%d\n"' attack.bin >attack
+
+squirt: squirt.c
+	gcc $< -o $@
 
 # Nuke the default rules for building executables
 SORRY = echo "Please say 'make $@.hex' to compile '$@'"
@@ -37,11 +38,13 @@ SORRY = echo "Please say 'make $@.hex' to compile '$@'"
 %: %.o; @$(SORRY)
 
 clean:
-	rm -f *.hex *.elf *.map *.o
+	rm -f *.hex *.elf *.map *.o attack squirt
 
 # Don't delete intermediate files
 .SECONDARY:
 
 ###
 
-chaos.o order.o: microbian.h
+total.o: lib.h hardware.h
+startup.o: hardware.h
+lib.o: lib.h

@@ -1,7 +1,7 @@
-# x3100-sync/Makefile
+# x3600-radio/Makefile
 # Copyright (c) 2020 J. M. Spivey
 
-all: chaos.hex order.hex
+all: remote.hex
 
 CC = arm-none-eabi-gcc
 CPU = -mcpu=cortex-m0 -mthumb
@@ -44,4 +44,4 @@ clean:
 
 ###
 
-chaos.o order.o: microbian.h
+remote.o: hardware.h lib.h microbian.h

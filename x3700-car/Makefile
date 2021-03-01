@@ -1,7 +1,7 @@
-# x3100-sync/Makefile
+# x3700-car/Makefile
 # Copyright (c) 2020 J. M. Spivey
 
-all: chaos.hex order.hex
+all: car.hex control.hex
 
 CC = arm-none-eabi-gcc
 CPU = -mcpu=cortex-m0 -mthumb
@@ -44,4 +44,6 @@ clean:
 
 ###
 
-chaos.o order.o: microbian.h
+car.elf: pwm.o
+
+car.o control.o: hardware.h microbian.h

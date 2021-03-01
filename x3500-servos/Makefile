@@ -1,7 +1,7 @@
-# x3100-sync/Makefile
+# x3500-servos/Makefile
 # Copyright (c) 2020 J. M. Spivey
 
-all: chaos.hex order.hex
+all: buggy.hex
 
 CC = arm-none-eabi-gcc
 CPU = -mcpu=cortex-m0 -mthumb
@@ -44,4 +44,7 @@ clean:
 
 ###
 
-chaos.o order.o: microbian.h
+servo.elf: adc.o pwm.o
+buggy.elf: pwm.o
+
+adc.o pwm.o servo.o buggy.o: hardware.h microbian.h parts.h

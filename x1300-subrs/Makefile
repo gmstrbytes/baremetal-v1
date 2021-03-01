@@ -1,18 +1,15 @@
-# x3100-sync/Makefile
+# x1300-subrs/Makefile
 # Copyright (c) 2020 J. M. Spivey
 
-all: chaos.hex order.hex
+all: fact.hex
 
 CC = arm-none-eabi-gcc
 CPU = -mcpu=cortex-m0 -mthumb
 CFLAGS = -O -g -Wall -ffreestanding
-INCLUDE = -I ../microbian
 AS = arm-none-eabi-as
 LD = arm-none-eabi-ld
 SIZE = arm-none-eabi-size
 OBJCOPY = arm-none-eabi-objcopy
-
-vpath %.h ../microbian
 
 %.o: %.c
 	$(CC) $(CPU) $(CFLAGS) $(INCLUDE) -c $< -o $@
@@ -20,16 +17,13 @@ vpath %.h ../microbian
 %.o: %.s
 	$(AS) $(CPU) $< -o $@
 
-%.elf: %.o ../microbian/microbian.a ../microbian/startup.o
-	$(CC) $(CPU) $(CFLAGS) -T ../microbian/nRF51822.ld \
-		$^ -nostdlib -lgcc -lc -o $@ -Wl,-Map,$*.map
+%.elf: %.o fmain.o lib.o startup.o
+	$(CC) $(CPU) $(CFLAGS) -T nRF51822.ld \
+		$^ -nostdlib -lgcc -o $@ -Wl,-Map,$*.map
 	$(SIZE) $@
 
 %.hex: %.elf
 	$(OBJCOPY) -O ihex $< $@
-
-../microbian/microbian.a:
-	$(MAKE) -C $(@D) all
 
 # Nuke the default rules for building executables
 SORRY = echo "Please say 'make $@.hex' to compile '$@'"
@@ -44,4 +38,6 @@ clean:
 
 ###
 
-chaos.o order.o: microbian.h
+fmain.o: lib.h hardware.h
+lib.o: lib.h
+startup.o: hardware.h
