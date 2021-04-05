@@ -1,5 +1,5 @@
-// x3800/pwm.c
-// Copyright (c) 2020 J. M. Spivey
+// x3500/pwm.c
+// Copyright (c) 2021 J. M. Spivey
 
 #include "microbian.h"
 #include "hardware.h"
@@ -14,13 +14,25 @@
 
    Events on each counter channel are connected via the "Programmable
    Peripheral Interconnect" (PPI) system to GPIO Tasks in the GPIOTE
-   module, and these tasks indirectly toggle the I/O pins. */
+   module, and these tasks indirectly toggle the I/O pins. 
 
-static int PWM;                 // Process ID
+      Timer 2         PPI          GPIOTE        GPIO
+      COMPARE       EEP TEP         OUT
+         0 ----------> 2 -----+
+                              +----> 0 --------> PAD1
+                +----> 0 -----+
+         2 -----+
+                +----> 1 -----+
+                              +----> 1 --------> PAD2
+         1 ----------> 3 -----+
+
+*/
+
+static int PWM_TASK;            // Process ID
 
 #define WIDTH 23                // Message type for pulse width change
 
-void pwm_setup(void) {
+static void pwm_setup(void) {
     // Pads 1 and 2 are outputs
     gpio_dir(PAD1, 1); gpio_dir(PAD2, 1);
 
@@ -74,23 +86,24 @@ void timer2_handler(void) {
     TIMER2_INTENCLR = BIT(TIMER_INT_COMPARE2);
 
     // Wake up the driver process
-    interrupt(PWM);
+    interrupt(PWM_TASK);
 }
 
-void set_width(int chan, int wid) {
+static void set_width(int chan, int wid) {
     if (wid >= 5) {
         // Genuine pulses: enable the start-of-pulse transition and set width
         width[chan] = wid;
         PPI_CHENSET = BIT(chan);
     } else {
-        // No pulses: disble pulse start, and set impossible width;
+        // No pulses: disable pulse start, and set impossible width;
         width[chan] = 65535;
         PPI_CHENCLR = BIT(chan);
     }
 }
 
-void pwm_task(int dummy) {
+static void pwm_task(int arg) {
     message m;
+    int client;
     
     pwm_setup();
 
@@ -98,6 +111,7 @@ void pwm_task(int dummy) {
         receive(ANY, &m);
         switch (m.m_type) {
         case WIDTH:
+            client = m.m_sender;
             set_width(0, m.m_i1);
             set_width(1, m.m_i2);
 
@@ -107,6 +121,7 @@ void pwm_task(int dummy) {
             TIMER2_INTENSET = BIT(TIMER_INT_COMPARE2);
             enable_irq(TIMER2_IRQ);
             receive(INTERRUPT, NULL);
+            send(client, REPLY, NULL);
             break;
 
         default:
@@ -119,9 +134,9 @@ void pwm_change(int width0, int width1) {
     message m;
     m.m_i1 = width0;
     m.m_i2 = width1;
-    send(PWM, WIDTH, &m);
+    sendrec(PWM_TASK, WIDTH, &m);
 }
 
 void pwm_init(void) {
-    PWM = start("PWM", pwm_task, 0, STACK);    
+    PWM_TASK = start("PWM", pwm_task, 0, STACK);    
 }

@@ -14,10 +14,8 @@ if [ x$BASH_VERSION = x ]; then exec /bin/bash $0; fi
 # Make sure we're not running as root
 if [ $(whoami) = root ]; then echo "Please don't run as root"; exit 1; fi
 
-web=https://github.com/Spivoxity/geany-mods/releases/download/v0.3
+web=https://github.com/Spivoxity/geany-mods-1.37/releases/download/rel-1
 arch=$(dpkg --print-architecture)
-gver=spivoxity3
-pkgs="geany-common_1.33-1-${gver}_all.deb geany_1.33-1-${gver}_$arch.deb"
 dir=$(dirname $0)
 
 cd $dir
@@ -30,27 +28,17 @@ case $arch in
         exit 1
 esac
 
+echo "*** Adding APT repository"
+sudo cp geany-mods.list /etc/apt/sources.list.d/geany-mods.list
+sudo apt-key add spivey-ppa.gpg.key
+sudo apt-get update
+
 echo "*** Installing packages"
 sudo apt-get -y install \
+     geany geany-plugin-projectorganizer \
      gcc-arm-none-eabi gdb-arm-none-eabi \
-     pulseview sigrok-firmware-fx2lafw \
-     minicom geany geany-plugin-projectorganizer \
+     pulseview sigrok-firmware-fx2lafw minicom \
      python3-pip bsdmainutils
-echo
-
-vers=$(dpkg-query -W -f '${Version}\n' geany)
-regexp="-$gver\$"
-if [[ $vers =~ $regexp ]]; then
-    echo "*** Geany is already at version $vers"
-else
-    echo "*** Installing enhanced version of geany"
-    for f in $pkgs; do
-        if ! wget $web/$f -O $f; then
-            echo "Couldn't download $f"; exit 1
-        fi
-    done
-    sudo dpkg -i $pkgs
-fi
 echo
 
 # The Python module cmsis-pack-manager can't be installed on Raspberry

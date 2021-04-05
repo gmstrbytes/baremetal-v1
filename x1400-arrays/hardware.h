@@ -134,10 +134,11 @@ argument to be a macro that expands the a 'position, width' pair. */
 
 
 /* Factory information */
-#define FICR_DEVICEID  ARRAY(0x10000060)
-#define FICR_OVERRIDEEN ADDR(0x100000a0)
+#define FICR_DEVICEID   ARRAY(0x10000060)
+#define FICR_DEVICEADDR ARRAY(0x100000a4)
+#define FICR_OVERRIDEEN  ADDR(0x100000a0)
 #define FICR_OVERRIDEEN_NRF 0
-#define FICR_NRF_1MBIT ARRAY(0x100000b0)
+#define FICR_NRF_1MBIT  ARRAY(0x100000b0)
 
 
 /* Non-Volatile Memory Controller */
@@ -249,6 +250,8 @@ struct _ppi_ch {
 #define RADIO_BCMATCH            ADDR(0x40001128)
 // Registers
 #define RADIO_SHORTS             ADDR(0x40001200)
+#define   RADIO_READY_START 0
+#define   RADIO_END_DISABLE 1
 #define RADIO_INTENSET           ADDR(0x40001304)
 #define RADIO_INTENCLR           ADDR(0x40001308)
 #define RADIO_CRCSTATUS          ADDR(0x40001400)

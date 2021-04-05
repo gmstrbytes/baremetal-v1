@@ -6,6 +6,9 @@
 #include "hardware.h"
 #include <string.h>
 
+// #define TIMEOUT 1
+
+
 /* PROCESS DESCRIPTORS */
 
 /* Each process has a descriptor, allocated when the process is
@@ -27,7 +30,9 @@ struct proc {
     int p_pending;              /* Whether HARDWARE message pending */
     int p_msgtype;              /* Message type to send or recieve */
     message *p_message;         /* Pointer to message buffer */
+#ifdef TIMEOUT
     int p_timeout;              /* Timeout for receive */
+#endif
     struct proc *p_next;        /* Next process in ready or send queue */
 };
 
@@ -201,6 +206,8 @@ at regular intervals (whatever they are), then this scheme ensures
 that no timer fires earlier than it should, even if the timer is set
 just before a tick. */
 
+#ifdef TIMEOUT
+
 static struct proc *timeout[NPROCS];
 static int n_timeouts = 0;
 
@@ -268,6 +275,8 @@ void mini_tick(int ms) {
     ticks = 0;
     n_timeouts = n;
 }
+
+#endif
 
 
 /* SEND AND RECEIVE */
@@ -347,8 +356,10 @@ static void mini_send(int dest, int type, message *msg) {
     if (accept(pdest, type)) {
         // Receiver is waiting: deliver the message and run receiver
         deliver(pdest->p_message, src, type, msg);
+#ifdef TIMEOUT
         if (pdest->p_timeout != NO_TIME)
             cancel_timeout(pdest);
+#endif
         make_ready(pdest);
         make_ready(os_current);
     } else {
@@ -361,7 +372,11 @@ static void mini_send(int dest, int type, message *msg) {
 }
 
 /* mini_receive -- receive a message */
-static void mini_receive(int type, message *msg, int timeout) {
+static void mini_receive(int type, message *msg
+#ifdef TIMEOUT
+                         , int timeout
+#endif
+    ) {
     // First see if an interrupt is pending
     if (os_current->p_pending && (type == ANY || type == INTERRUPT)) {
         os_current->p_pending = 0;
@@ -395,15 +410,19 @@ static void mini_receive(int type, message *msg, int timeout) {
         }
     }
 
+#ifdef TIMEOUT
     if (timeout == 0) {
         // No message, so time out immediately
         deliver(msg, HARDWARE, TIMEOUT, NULL);
         return;
     }
+#endif
 
     // No luck: we must wait.
     set_state(os_current, RECEIVING, type, msg);
+#ifdef TIMEOUT
     if (timeout > 0) set_timeout(timeout);
+#endif
     choose_proc();
 }    
 
@@ -529,7 +548,9 @@ static struct proc *create_proc(char *name, unsigned stksize) {
     p->p_waiting = 0;
     p->p_pending = 0;
     p->p_msgtype = ANY;
+#ifdef TIMEOUT
     p->p_timeout = NO_TIME;
+#endif
     p->p_message = NULL;
     p->p_next = NULL;
 
@@ -641,7 +662,11 @@ unsigned *system_call(unsigned *psp) {
         break;
 
     case SYS_RECEIVE:
-        mini_receive(arg(0, int), arg(1, message *), arg(2, int));
+        mini_receive(arg(0, int), arg(1, message *)
+#ifdef TIMEOUT
+                     , arg(2, int)
+#endif
+            );
         break;
 
     case SYS_SENDREC:
@@ -700,6 +725,8 @@ void NOINLINE send(int dest, int type, message *msg) {
     syscall(SYS_SEND);
 }
 
+#ifdef TIMEOUT
+
 void NOINLINE receive_t(int type, message *msg, int timeout) {
     syscall(SYS_RECEIVE);
 }
@@ -707,6 +734,14 @@ void NOINLINE receive_t(int type, message *msg, int timeout) {
 void receive(int type, message *msg) {
     receive_t(type, msg, -1);
 }
+
+#else
+
+void NOINLINE receive(int type, message *msg) {
+    syscall(SYS_RECEIVE);
+}
+
+#endif
 
 void NOINLINE sendrec(int dest, int type, message *msg) {
     syscall(SYS_SENDREC);

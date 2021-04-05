@@ -3,7 +3,7 @@
 
 #include "microbian.h"
 #include "hardware.h"
-#include "pwm.h"
+
 
 int ADAPTER, CONTROL;
 
@@ -28,6 +28,9 @@ void adapter_task(int dummy) {
 
 
 // CONTROL PROCESS
+
+void pwm_change(int width0, int width1);
+void pwm_init(void);
 
 #define REST 1500
 #define SPEED 300

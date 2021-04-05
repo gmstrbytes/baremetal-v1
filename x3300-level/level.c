@@ -54,7 +54,7 @@ static void main(int n) {
     printf("Hello\n\n");
     i2c_map();
     printf("\n");
-    timer_delay(2000);
+    timer_delay(1000);
     accel_start();
 
     while (1) {
@@ -69,7 +69,7 @@ static void main(int n) {
 void init(void) {
     serial_init();
     timer_init();
-    i2c_init(0);
+    i2c_init(I2C_INTERNAL);
     display_init();
     start("Main", main, 0, STACK);
 }

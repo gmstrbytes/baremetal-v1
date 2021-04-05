@@ -19,3 +19,6 @@ int atoi(const char *p);
 
 /* xtou -- convert hex string to unsigned */
 unsigned xtou(char *p);
+
+/* rand -- pseudo-random number in range [1..2^31-1) */
+unsigned rand(void);

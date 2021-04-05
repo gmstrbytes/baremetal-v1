@@ -128,7 +128,7 @@ int i2c_xfer(int chan, int kind, int addr,
 void i2c_init(int chan);
 
 /* radio.c */
-#define RADIO_PACKET 32
+#define RADIO_PACKET 128
 
 void radio_group(int group);
 void radio_send(void *buf, int n);

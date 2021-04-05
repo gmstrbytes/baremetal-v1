@@ -41,8 +41,22 @@ static void serial_interrupt(void) {
     enable_irq(UART_IRQ);
 }
 
-/* start_tx -- start transmitter if possible */
-static void start_tx(void) {
+/* serial_enqueue -- add character to output queue */
+static void serial_enqueue(char ch) {
+    while (n_tx == NBUF) {
+        // The buffer is full -- wait for a space to appear
+        receive(INTERRUPT, NULL);
+        serial_interrupt();
+        start_tx();
+    }
+
+    txbuf[bufin] = ch;
+    bufin = (bufin+1) % NBUF;
+    n_tx++;
+}
+
+/* serial_starttx -- start transmitter if possible */
+static void serial_starttx(void) {
     // Can we start transmitting a character?
     if (txidle && n_tx > 0) {
         UART_TXD = txbuf[bufout];
@@ -81,24 +95,14 @@ static void serial_task(int arg) {
 
         case PUTC:
             ch = m.m_i1;
-            
-            while (n_tx == NBUF) {
-                // The buffer is full -- wait for a space to appear
-                receive(INTERRUPT, NULL);
-                serial_interrupt();
-                start_tx();
-            }
-
-            txbuf[bufin] = ch;
-            bufin = (bufin+1) % NBUF;
-            n_tx++;
+            serial_enqueue(ch);
             break;
 
         default:
             badmesg(m.m_type);
         }
           
-        start_tx();
+        serial_starttx();
     }
 }
 

@@ -6,7 +6,7 @@
 
 /* period -- coprime periods for the LEDs */
 const unsigned period[] = {
-    11, 12, 13, 15, 17, 19, 23
+    11, 13, 14, 15, 17, 19, 23
 };
 
 #define JIFFY 25 // milliseconds

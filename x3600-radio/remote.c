@@ -19,11 +19,10 @@ static const image letter_B =
           1,1,1,0,0);
 
 void receiver_task(int dummy) {
-    byte buf[32];
+    byte buf[RADIO_PACKET];
     int n;
 
     printf("Hello\n");
-
     display_show(letter_A);
     timer_delay(1000);
     display_show(letter_B);

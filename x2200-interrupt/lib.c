@@ -199,3 +199,33 @@ void printf(const char *fmt, ...) {
     va_end(va);
     flush(&b);
 }
+
+#define intr_disable() asm ("cpsid i");
+#define get_primask(x) asm ("mrs %0, primask" : "=r" (x))
+#define set_primask(x) asm ("msr primask, %0" : : "r" (x))
+
+/* rand -- random numbers in the range [1 .. 2^31-1) */
+unsigned rand(void) {
+    static unsigned seed = 31415926;
+    unsigned prev;
+
+#define M 0x7fffffff
+#define A 48271
+#define Q (M / A) // = 44488
+#define R (M % A) // = 3399
+
+    // Make the function thread-safe by temporarily disabling interrupts
+    get_primask(prev);
+    intr_disable();
+
+    // Lehmer congruential method: see Knuth vol. 2, p. 185.
+    int val = seed;
+    int quo = val / Q;
+    val = A * (val - Q * quo) - R * quo;
+    if (val < 0) val += M;
+    seed = val;
+
+    set_primask(prev);
+    return val;
+}
+    
