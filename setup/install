@@ -21,16 +21,16 @@ dir=$(dirname $0)
 cd $dir
 
 case $arch in
-    amd64|armhf)
-        echo "Installing for $arch ..."; echo;;
+    amd64|i386|armhf)
+        echo "Installing for architecture $arch ..."; echo;;
     *)
-        echo "Can't install for $arch"
+        echo "Can't install for architecture $arch"
         exit 1
 esac
 
 echo "*** Adding APT repository"
 sudo cp geany-mods.list /etc/apt/sources.list.d/geany-mods.list
-sudo apt-key add spivey-ppa.gpg.key
+sudo apt-key add geany-mods.gpg.key
 sudo apt-get update
 
 echo "*** Installing packages"
