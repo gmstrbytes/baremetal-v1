@@ -1,1 +1,3 @@
+# geany-mods.list
+# APT sources file for local mods to Geany
 deb https://spivey.oriel.ox.ac.uk/repos/geany-mods buster main

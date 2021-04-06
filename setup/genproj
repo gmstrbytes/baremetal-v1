@@ -1,5 +1,8 @@
 #!/bin/bash
 # genproj
+# Copyright (c) 2021 J. M. Spivey
+
+# Create Geany project files for each experiment containing location
 
 dir=$(dirname $(dirname $(realpath $0)))
 
