@@ -106,7 +106,6 @@ static void timer_task(int n) {
 
         switch (m.m_type) {
         case INTERRUPT:
-            tick(TICK);
             check_timers();
             break;
 
