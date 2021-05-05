@@ -1,23 +1,25 @@
-// common/startup.c
-// Copyright (c) 2018 J. M. Spivey
+/* common/startup.c */
+/* Copyright (c) 2018 J. M. Spivey */
 
 #include "hardware.h"
 
 /* init -- main program, creates application processes */
 void init(void);
 
-void default_start(void) {
-    init();                    // Call the main program.
-    while (1) pause();         // Halt if init() returns
+void default_start(void)
+{
+    init();                    /* Call the main program. */
+    while (1) pause();         /* Halt if init() returns */
 }
 
 void __start(void) __attribute((weak, alias("default_start")));
 
-/* The next four routines can be used in C compiler output, even
-   if not mentioned in the source. */
+/* The next four routines can be used in C compiler output, even if
+not mentioned in the source. */
 
 /* memcpy -- copy n bytes from src to dest (non-overlapping) */
-void *memcpy(void *dest, const void *src, unsigned n) {
+void *memcpy(void *dest, const void *src, unsigned n)
+{
     unsigned char *p = dest;
     const unsigned char *q = src;
     while (n-- > 0) *p++ = *q++;
@@ -25,7 +27,8 @@ void *memcpy(void *dest, const void *src, unsigned n) {
 }
 
 /* memmove -- copy n bytes from src to dest, allowing overlaps */
-void *memmove(void *dest, const void *src, unsigned n) {
+void *memmove(void *dest, const void *src, unsigned n)
+{
     unsigned char *p = dest;
     const unsigned char *q = src;
     if (dest <= src)
@@ -38,14 +41,16 @@ void *memmove(void *dest, const void *src, unsigned n) {
 }
     
 /* memset -- set n bytes of dest to byte x */
-void *memset(void *dest, unsigned x, unsigned n) {
+void *memset(void *dest, unsigned x, unsigned n)
+{
     unsigned char *p = dest;
     while (n-- > 0) *p++ = x;
     return dest;
 }
 
 /* memcmp -- compare n bytes */
-int memcmp(const void *pp, const void *qq, int n) {
+int memcmp(const void *pp, const void *qq, int n)
+{
     const unsigned char *p = pp, *q = qq;
     while (n-- > 0) {
         if (*p++ != *q++)
@@ -59,8 +64,9 @@ extern unsigned char __data_start[], __data_end[],
     __bss_start[], __bss_end[], __etext[], __stack[];
 
 /* __reset -- the system starts here */
-void __reset(void) {
-    // Activate the crystal clock
+void __reset(void)
+{
+    /* Activate the crystal clock */
     CLOCK_HFCLKSTARTED = 0;
     CLOCK_HFCLKSTART = 1;
     while (! CLOCK_HFCLKSTARTED) { }
@@ -77,40 +83,44 @@ void __reset(void) {
 /* NVIC SETUP FUNCTIONS */
 
 /* On Cortex-M0, only the top two bits of each interrupt priority are
-   implemented, but for portability priorities should be specified
-   with integers in the range [0..255].  On Cortex-M4, the top three
-   bits are implemented.*/
+implemented, but for portability priorities should be specified with
+integers in the range [0..255].  On Cortex-M4, the top three bits are
+implemented.*/
 
 /* irq_priority -- set priority for an IRQ to a value [0..255] */
-inline void irq_priority(int irq, unsigned prio) {
+void irq_priority(int irq, unsigned prio)
+{
     if (irq < 0)
         SET_BYTE(SCB_SHPR[(irq+8) >> 2], irq & 0x3, prio);
     else
         SET_BYTE(NVIC_IPR[irq >> 2], irq & 0x3, prio);
 }
      
-// See hardware.h for macros enable_irq, disable_irq, clear_pending, reschedule
+/* See hardware.h for macros enable_irq, disable_irq, 
+clear_pending, reschedule */
 
 
 /*  INTERRUPT VECTORS */
 
 /* We use the linker script to define each handler name as an alias
-   for default_handler if it is not defined elsewhere.  Applications
-   can subsitute their own definitions for individual handler names
-   like uart_handler(). */
+for default_handler if it is not defined elsewhere.  Applications can
+subsitute their own definitions for individual handler names like
+uart_handler(). */
 
 /* delay_loop -- timed delay */
-void delay_loop(unsigned usecs) {
+void delay_loop(unsigned usecs)
+{
     unsigned t = usecs << 2;
     while (t > 0) {
-        // 500nsec per iteration at 16MHz
+        /* 500nsec per iteration at 16MHz */
         nop(); nop(); nop();
         t--;
     }
 }
 
 /* spin -- show Seven Stars of Death */
-void spin(void) {
+void spin(void)
+{
     intr_disable();
 
     GPIO_DIR = 0xfff0;
@@ -124,8 +134,8 @@ void spin(void) {
 
 void default_handler(void) __attribute((weak, alias("spin")));
 
-// The linker script makes all these handlers into weak aliases for
-// default_handler.
+/* The linker script makes all these handlers into weak aliases for */
+/* default_handler. */
 
 void nmi_handler(void);
 void hardfault_handler(void);
@@ -158,57 +168,57 @@ void swi3_handler(void);
 void swi4_handler(void);
 void swi5_handler(void);
 
-// This vector table is placed at address 0 in the flash by directives
-// in the linker script.
+/* This vector table is placed at address 0 in the flash by directives
+in the linker script. */
 
 void *__vectors[] __attribute((section(".vectors"))) = {
-    __stack,                    // -16
+    __stack,                    /* -16 */
     __reset,
     nmi_handler,
     hardfault_handler,
-    0,                          // -12
+    0,                          /* -12 */
     0,
     0,
     0,
-    0,                          //  -8
+    0,                          /*  -8 */
     0,
     0,
     svc_handler,
-    0,                          // -4
+    0,                          /* -4 */
     0,
     pendsv_handler,
     systick_handler,
     
     /* external interrupts */
-    power_clock_handler,        //  0
+    power_clock_handler,        /*  0 */
     radio_handler,
     uart_handler,
     i2c_handler,
-    spi_handler,                //  4
+    spi_handler,                /*  4 */
     0,
     gpiote_handler,
     adc_handler,
-    timer0_handler,             //  8
+    timer0_handler,             /*  8 */
     timer1_handler,
     timer2_handler,
     rtc0_handler,
-    temp_handler,               // 12
+    temp_handler,               /* 12 */
     rng_handler,
     ecb_handler,
     ccm_aar_handler,
-    wdt_handler,                // 16
+    wdt_handler,                /* 16 */
     rtc1_handler,
     qdec_handler,
     lpcomp_handler,
-    swi0_handler,               // 20
+    swi0_handler,               /* 20 */
     swi1_handler,
     swi2_handler,
     swi3_handler,
-    swi4_handler,               // 24
+    swi4_handler,               /* 24 */
     swi5_handler,
     0,
     0,
-    0,                          // 28
+    0,                          /* 28 */
     0,
     0,
     0

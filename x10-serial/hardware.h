@@ -1,5 +1,5 @@
-// common/hardware.h
-// Copyright (c) 2018-20 J. M. Spivey
+/* common/hardware.h */
+/* Copyright (c) 2018-20 J. M. Spivey */
 
 #define UBIT 1
 #define UBIT_V1 1
@@ -74,7 +74,7 @@ argument to be a macro that expands the a 'position, width' pair. */
 #define PAD20 30
 #define  I2C_SDA PAD20
 
-// Only one I2C interface
+/* Only one I2C interface */
 #define I2C_INTERNAL 0
 #define I2C_EXTERNAL 0
 #define N_I2CS 1
@@ -150,7 +150,7 @@ argument to be a macro that expands the a 'position, width' pair. */
 
 
 /* GPIO */
-// Registers
+/* Registers */
 #define GPIO_OUT                 ADDR(0x50000504)
 #define GPIO_OUTSET              ADDR(0x50000508)
 #define GPIO_OUTCLR              ADDR(0x5000050c)
@@ -173,7 +173,7 @@ argument to be a macro that expands the a 'position, width' pair. */
 #define     GPIO_DRIVE_S0S1 0
 #define     GPIO_DRIVE_H0S1 1
 #define     GPIO_DRIVE_S0H1 2
-#define     GPIO_DRIVE_S0D1 6 // Open drain
+#define     GPIO_DRIVE_S0D1 6 /* Open drain */
 #define   GPIO_PINCNF_SENSE 16, 2
 #define     GPIO_SENSE_Disabled 0
 #define     GPIO_SENSE_High 2
@@ -181,12 +181,12 @@ argument to be a macro that expands the a 'position, width' pair. */
 
 
 /* GPIOTE */
-// Tasks
+/* Tasks */
 #define GPIOTE_OUT              ARRAY(0x40006000)
-// Events
+/* Events */
 #define GPIOTE_IN               ARRAY(0x40006100)
 #define GPIOTE_PORT              ADDR(0x4000617c)
-// Registers
+/* Registers */
 #define GPIOTE_INTEN             ADDR(0x40006300)
 #define GPIOTE_INTENSET          ADDR(0x40006304)
 #define GPIOTE_INTENCLR          ADDR(0x40006308)
@@ -200,7 +200,7 @@ argument to be a macro that expands the a 'position, width' pair. */
 #define     GPIOTE_POLARITY_HiToLo 2
 #define     GPIOTE_POLARITY_Toggle 3
 #define   GPIOTE_CONFIG_OUTINIT 20, 1
-// Interrupts
+/* Interrupts */
 #define GPIOTE_INT_IN0 0
 #define GPIOTE_INT_IN1 1
 #define GPIOTE_INT_IN2 2
@@ -228,7 +228,7 @@ struct _ppi_ch {
 
 
 /* Radio */
-// Tasks
+/* Tasks */
 #define RADIO_TXEN               ADDR(0x40001000)
 #define RADIO_RXEN               ADDR(0x40001004)
 #define RADIO_START              ADDR(0x40001008)
@@ -238,7 +238,7 @@ struct _ppi_ch {
 #define RADIO_RSSISTOP           ADDR(0x40001018)
 #define RADIO_BCSTART            ADDR(0x4000101c)
 #define RADIO_BCSTOP             ADDR(0x40001020)
-// Events
+/* Events */
 #define RADIO_READY              ADDR(0x40001100)
 #define RADIO_ADDRESS            ADDR(0x40001104)
 #define RADIO_PAYLOAD            ADDR(0x40001108)
@@ -248,7 +248,7 @@ struct _ppi_ch {
 #define RADIO_DEVMISS            ADDR(0x40001118)
 #define RADIO_RSSIEND            ADDR(0x4000111c)
 #define RADIO_BCMATCH            ADDR(0x40001128)
-// Registers
+/* Registers */
 #define RADIO_SHORTS             ADDR(0x40001200)
 #define   RADIO_READY_START 0
 #define   RADIO_END_DISABLE 1
@@ -295,7 +295,7 @@ struct _ppi_ch {
 #define RADIO_DACNF              ADDR(0x40001640)
 #define RADIO_OVERRIDE          ARRAY(0x40001724)
 #define RADIO_POWER              ADDR(0x40001ffc)
-// Interrupts
+/* Interrupts */
 #define RADIO_INT_READY 0
 #define RADIO_INT_END 3
 #define RADIO_INT_DISABLED 4
@@ -310,16 +310,16 @@ union _timer {
 
 #define TIMER ((union _timer *) 0x40008000)
 
-// Tasks
+/* Tasks */
 #define T_START                  REG(0x000)
 #define T_STOP                   REG(0x004)
 #define T_COUNT                  REG(0x008)
 #define T_CLEAR                  REG(0x00c)
 #define T_SHUTDOWN               REG(0x010)
 #define T_CAPTURE                ARR(0x040)
-// Events
+/* Events */
 #define T_COMPARE                ARR(0x140)
-// Registers
+/* Registers */
 #define T_SHORTS                 REG(0x200)
 #define   TIMER_COMPARE0_CLEAR 0
 #define   TIMER_COMPARE1_CLEAR 1
@@ -346,7 +346,7 @@ union _timer {
 #define T_PRESCALER              REG(0x510)
 #define T_CC                     ARR(0x540)
 
-// Timer 0
+/* Timer 0 */
 #define TIMER0_START      TIMER[0].T_START
 #define TIMER0_STOP       TIMER[0].T_STOP
 #define TIMER0_COUNT      TIMER[0].T_COUNT
@@ -362,7 +362,7 @@ union _timer {
 #define TIMER0_PRESCALER  TIMER[0].T_PRESCALER
 #define TIMER0_CC         TIMER[0].T_CC
 
-// Timer 1
+/* Timer 1 */
 #define TIMER1_START      TIMER[1].T_START
 #define TIMER1_STOP       TIMER[1].T_STOP
 #define TIMER1_COUNT      TIMER[1].T_COUNT
@@ -378,7 +378,7 @@ union _timer {
 #define TIMER1_PRESCALER  TIMER[1].T_PRESCALER
 #define TIMER1_CC         TIMER[1].T_CC
 
-// Timer 2
+/* Timer 2 */
 #define TIMER2_START      TIMER[2].T_START
 #define TIMER2_STOP       TIMER[2].T_STOP
 #define TIMER2_COUNT      TIMER[2].T_COUNT
@@ -396,12 +396,12 @@ union _timer {
 
 
 /* Random Number Generator */
-// Tasks
+/* Tasks */
 #define RNG_START                ADDR(0x4000D000)
 #define RNG_STOP                 ADDR(0x4000D004)
-// Events
+/* Events */
 #define RNG_VALRDY               ADDR(0x4000D100)
-// Registers
+/* Registers */
 #define RNG_SHORTS               ADDR(0x4000D200)
 #define RNG_INTEN                ADDR(0x4000D300)
 #define RNG_INTENSET             ADDR(0x4000D304)
@@ -409,22 +409,22 @@ union _timer {
 #define RNG_CONFIG               ADDR(0x4000D504)
 #define   RNG_CONFIG_DERCEN 0
 #define RNG_VALUE                ADDR(0x4000D508)
-// Interrupts
+/* Interrupts */
 #define RNG_INT_VALRDY 0
 
 
 /* Temperature sensor */
-// Tasks
+/* Tasks */
 #define TEMP_START               ADDR(0x4000C000)
 #define TEMP_STOP                ADDR(0x4000C004)
-// Events
+/* Events */
 #define TEMP_DATARDY             ADDR(0x4000C100)
-// Registers
+/* Registers */
 #define TEMP_INTEN               ADDR(0x4000C300)
 #define TEMP_INTENSET            ADDR(0x4000C304)
 #define TEMP_INTENCLR            ADDR(0x4000C308)
 #define TEMP_TEMP                ADDR(0x4000C508)
-// Interrupts
+/* Interrupts */
 #define TEMP_INT_DATARDY 0
 
 
@@ -436,20 +436,20 @@ union _i2c {
 
 #define I2C ((union _i2c *) 0x40003000)
 
-// Tasks
+/* Tasks */
 #define I_STARTRX                REG(0x000)
 #define I_STARTTX                REG(0x008)
 #define I_STOP                   REG(0x014)
 #define I_SUSPEND                REG(0x01c)
 #define I_RESUME                 REG(0x020)
-// Events
+/* Events */
 #define I_STOPPED                REG(0x104)
 #define I_RXDREADY               REG(0x108)
 #define I_TXDSENT                REG(0x11c)
 #define I_ERROR                  REG(0x124)
 #define I_BB                     REG(0x138)
 #define I_SUSPENDED              REG(0x148)
-// Registers
+/* Registers */
 #define I_SHORTS                 REG(0x200)
 #define I_INTEN                  REG(0x300)
 #define I_INTENSET               REG(0x304)
@@ -470,25 +470,25 @@ union _i2c {
 #define   I2C_FREQUENCY_100kHz 0x01980000
 #define I_ADDRESS                REG(0x588)
 #define I_POWER                  REG(0xffc)
-// Interrupts
+/* Interrupts */
 #define I2C_INT_STOPPED 1
 #define I2C_INT_RXDREADY 2
 #define I2C_INT_TXDSENT 7
 #define I2C_INT_ERROR 9
 #define I2C_INT_BB 14
-// Shortcuts
+/* Shortcuts */
 #define I2C_BB_SUSPEND 0
 #define I2C_BB_STOP 1
 
 
 /* UART */
-// Tasks
+/* Tasks */
 #define UART_STARTRX             ADDR(0x40002000)
 #define UART_STARTTX             ADDR(0x40002008)
-// Events
+/* Events */
 #define UART_RXDRDY              ADDR(0x40002108)
 #define UART_TXDRDY              ADDR(0x4000211c)
-// Registers
+/* Registers */
 #define UART_INTEN               ADDR(0x40002300)
 #define UART_INTENSET            ADDR(0x40002304)
 #define UART_INTENCLR            ADDR(0x40002308)
@@ -523,18 +523,18 @@ union _i2c {
 #define   UART_CONFIG_PARITY 1, 3
 #define     UART_PARITY_None 0
 #define     UART_PARITY_Even 7
-// Interrupts
+/* Interrupts */
 #define UART_INT_RXDRDY 2
 #define UART_INT_TXDRDY 7
 
 
 /* ADC */
-// Tasks
+/* Tasks */
 #define ADC_START                ADDR(0x40007000)
 #define ADC_STOP                 ADDR(0x40007004)
-// Events
+/* Events */
 #define ADC_END                  ADDR(0x40007100)
-// Registers
+/* Registers */
 #define ADC_INTEN                ADDR(0x40007300)
 #define ADC_INTENSET             ADDR(0x40007304)
 #define ADC_INTENCLR             ADDR(0x40007308)
@@ -561,7 +561,7 @@ union _i2c {
 #define     ADC_EXTREFSEL_Ref0 1
 #define     ADC_EXTREFSEL_Ref1 2
 #define ADC_RESULT               ADDR(0x40007508)
-// Interrupts
+/* Interrupts */
 #define ADC_INT_END 0
 
     
