@@ -132,7 +132,7 @@ void stop_timer(void)
     led_off();
 
     TIMER0_CAPTURE[0] = 1;
-    while (bufcnt > 0) pause(); /* Wait while buffer empties */
+    while (bufcnt > 0) pause(); /* Wait until buffer empties */
     TIMER0_CAPTURE[1] = 1;
     unsigned time1 = TIMER0_CC[0];
     unsigned time2 = TIMER0_CC[1];

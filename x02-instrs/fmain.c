@@ -159,14 +159,6 @@ unsigned easy_mod(unsigned a, unsigned b)
 #define SCALE 4
 #endif
 
-#ifdef KL25Z
-#define FUDGE 0
-#define MULT 2
-#define DIV 3
-#define RES 125
-#define SCALE 3
-#endif
-
 extern int func(int a, int b);
 
 /* init -- main program */
@@ -187,18 +179,6 @@ void init(void)
     TIMER0_START = 1;
 #endif
 
-#ifdef KL25Z
-    pin_function(LED_BLUE, 1);
-    pin_mode(LED_BLUE, PORT_MODE_PullNone);
-    pin_dir(LED_BLUE, 1);
-    pin_value(LED_BLUE, 1);
-    
-    /* Set up PIT to count at 24MHz */
-    SET_BIT(SIM_SCGC6, SIM_SCGC6_PIT); /* Enable clock */
-    PIT_MCR = 0;
-    PIT0_LDVAL = 0xffffffff;
-#endif    
-
     while (1) {
         int a, b, c;
         a = getnum("a = ");
@@ -213,15 +193,6 @@ void init(void)
         time = TIMER0_CC[0];
 #endif
         
-#ifdef KL25Z
-        PIT0_TCTRL = BIT(PIT_TCTRL_TEN);
-        pin_value(LED_BLUE, 0);
-        c = func(a, b);
-        pin_value(LED_BLUE, 0);
-        time = ~PIT0_CVAL;
-        PIT0_TCTRL = 0;
-#endif
-
         time -= FUDGE;
         printf("func(%d, %d) = %d\n", a, b, c);
         printf("func(%x, %x) = %x\n", a, b, c);
