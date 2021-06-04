@@ -103,10 +103,19 @@ static void ir_edge(unsigned t)
 
     prev = val; tprev = t;
 }
-                
+
+static int IR_TASK;
+static volatile unsigned intrtime;
+
+void gpiote_handler(void)
+{
+    intrtime = timer_micros();
+    disable_irq(GPIOTE_IRQ);
+    interrupt(IR_TASK);
+}
+
 static void ir_task(int arg)
 {
-    unsigned t;
     message m;
 
     gpio_connect(IR_PIN);
@@ -122,11 +131,10 @@ static void ir_task(int arg)
 
     while (1) {
         receive(ANY, &m);
-        t = timer_micros();
         switch (m.m_type) {
         case INTERRUPT:
             if (GPIOTE_IN[CHAN]) {
-                ir_edge(t);
+                ir_edge(intrtime);
                 GPIOTE_IN[CHAN] = 0;
                 clear_pending(GPIOTE_IRQ);
                 enable_irq(GPIOTE_IRQ);
@@ -142,8 +150,6 @@ static void ir_task(int arg)
         }
     }
 }
-
-int IR_TASK;
 
 void main_task(int arg)
 {

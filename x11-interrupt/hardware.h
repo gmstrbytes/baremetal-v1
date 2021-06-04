@@ -34,13 +34,6 @@ argument to be a macro that expands the a 'position, width' pair. */
 
 #define __MASK0(wid)  (~((-2) << (wid-1)))
 
-#define ADDR(x) (* (unsigned volatile *) (x))
-#define ARRAY(x) ((unsigned volatile *) (x))
-
-#pragma GCC diagnostic ignored "-Warray-bounds"
-#define REG(i) reg[i>>2]
-#define ARR(i) arr[i>>2]
-
     
 /* Device pins */
 #define PAD19 0
@@ -55,7 +48,9 @@ argument to be a macro that expands the a 'position, width' pair. */
 #define PAD9 10
 #define PAD7 11
 #define PAD6 12
-/* LED rows are GPIO 13-15 */
+#define ROW1 13
+#define ROW2 14
+#define ROW3 15
 #define PAD16 16
 #define PAD5 17
 #define  BUTTON_A PAD5
@@ -99,66 +94,103 @@ argument to be a macro that expands the a 'position, width' pair. */
 
 #define N_INTERRUPTS 32
 
-/* System registers */
-#define SCB_CPUID               ADDR(0xe000ed00)
-#define SCB_ICSR                ADDR(0xe000ed04)
+
+/* Device register structures */
+#define _DEVSTRUCT union
+#define __concat(x, y) x##y /* Don't ask! */
+#define _PADDING(offset, line) unsigned char __concat(_pad_, line)[offset]
+#define _REGISTER(decl, offset) \
+    struct { _PADDING(offset, __LINE__); decl; }
+
+
+/* System contol block */
+_DEVSTRUCT _scb {
+    _REGISTER(unsigned volatile CPUID, 0x00);
+    _REGISTER(unsigned volatile ICSR, 0x04);
 #define   SCB_ICSR_PENDSVSET 28
 #define   SCB_ICSR_VECTACTIVE 0, 8
-#define SCB_SCR                 ADDR(0xe000ed10)
+    _REGISTER(unsigned volatile SCR, 0x10);
 #define   SCB_SCR_SLEEPONEXIT 1
 #define   SCB_SCR_SLEEPDEEP 2
 #define   SCB_SCR_SEVONPEND 4
-#define SCB_SHPR               ARRAY(0xe000ed1c)
+    _REGISTER(unsigned volatile SHPR[3], 0x18);
+};
 
-#define NVIC_ISER              ARRAY(0xe000e100)
-#define NVIC_ICER              ARRAY(0xe000e180)
-#define NVIC_ISPR              ARRAY(0xe000e200)
-#define NVIC_ICPR              ARRAY(0xe000e280)
-#define NVIC_IPR               ARRAY(0xe000e400)
+#define SCB (* (_DEVSTRUCT _scb *) 0xe000ed00)
 
-#define POWER_RAMON             ADDR(0x40000524)
+
+/* Nested vectored interupt controller */
+_DEVSTRUCT _nvic {
+    _REGISTER(unsigned volatile ISER[8], 0x100);
+    _REGISTER(unsigned volatile ICER[8], 0x180);
+    _REGISTER(unsigned volatile ISPR[8], 0x200);
+    _REGISTER(unsigned volatile ICPR[8], 0x280);
+    _REGISTER(unsigned volatile IPR[60], 0x400);
+};
+
+#define NVIC (* (_DEVSTRUCT _nvic *) 0xe000e000)
 
 
 /* Clock control */
-#define CLOCK_HFCLKSTART        ADDR(0x40000000)
-#define CLOCK_LFCLKSTART        ADDR(0x40000008)
-#define CLOCK_HFCLKSTARTED      ADDR(0x40000100)
-#define CLOCK_LFCLKSTARTED      ADDR(0x40000104)
-#define CLOCK_LFCLKSRC          ADDR(0x40000518)
-#define CLOCK_XTALFREQ          ADDR(0x40000550)
-     
-#define CLOCK_LFCLKSRC_RC 0
-#define CLOCK_XTALFREQ_16MHz 0xFF
+_DEVSTRUCT _clock {
+    _REGISTER(unsigned volatile HFCLKSTART, 0x000);
+    _REGISTER(unsigned volatile LFCLKSTART, 0x008);
+    _REGISTER(unsigned volatile HFCLKSTARTED, 0x100);
+    _REGISTER(unsigned volatile LFCLKSTARTED, 0x104);
+    _REGISTER(unsigned volatile LFCLKSRC, 0x518);
+#define   CLOCK_LFCLKSRC_RC 0
+    _REGISTER(unsigned volatile XTALFREQ, 0x550);
+#define   CLOCK_XTALFREQ_16MHz 0xFF
+};
 
-#define MPU_DISABLEINDEBUG ADDR(0x40000608)
+#define CLOCK (* (_DEVSTRUCT _clock *) 0x40000000)
+
+
+/* Memory protection unit */
+_DEVSTRUCT _mpu {
+    _REGISTER(unsigned volatile DISABLEINDEBUG, 0x608);
+};
+
+#define MPU (* (_DEVSTRUCT _mpu *) 0x40000000)
 
 
 /* Factory information */
-#define FICR_DEVICEID   ARRAY(0x10000060)
-#define FICR_DEVICEADDR ARRAY(0x100000a4)
-#define FICR_OVERRIDEEN  ADDR(0x100000a0)
-#define FICR_OVERRIDEEN_NRF 0
-#define FICR_NRF_1MBIT  ARRAY(0x100000b0)
+_DEVSTRUCT _ficr {
+    _REGISTER(unsigned volatile DEVICEID[2], 0x060);
+    _REGISTER(unsigned volatile DEVICEADDR[2], 0x0a4);
+    _REGISTER(unsigned volatile OVERRIDEEN, 0x0a0);
+#define   FICR_OVERRIDEEN_NRF 0
+    _REGISTER(unsigned volatile NRF_1MBIT[5], 0x0b0);
+};
+
+#define FICR (* (_DEVSTRUCT _ficr *) 0x10000000)
 
 
 /* Non-Volatile Memory Controller */
-#define NVMC_READY               ADDR(0x4001e400)
-#define NVMC_CONFIG              ADDR(0x4001e504)
+_DEVSTRUCT _nvmc {
+    _REGISTER(unsigned volatile READY, 0x400);
+    _REGISTER(unsigned volatile CONFIG, 0x504);
 #define   NVMC_CONFIG_WEN 0
 #define   NVMC_CONFIG_EEN 1   
-#define NVMC_ERASEPAGE           (* (void * volatile *) 0x4001e508)
+    _REGISTER(void * volatile ERASEPAGE, 0x508);
+    _REGISTER(unsigned volatile ICACHECONF, 0x540);
+#define   NVMC_ICACHECONF_CACHEEN 0
+};
+
+#define NVMC (* (_DEVSTRUCT _nvmc *) 0x4001e000)
 
 
 /* GPIO */
+_DEVSTRUCT _gpio {
 /* Registers */
-#define GPIO_OUT                 ADDR(0x50000504)
-#define GPIO_OUTSET              ADDR(0x50000508)
-#define GPIO_OUTCLR              ADDR(0x5000050c)
-#define GPIO_IN                  ADDR(0x50000510)
-#define GPIO_DIR                 ADDR(0x50000514)
-#define GPIO_DIRSET              ADDR(0x50000518)
-#define GPIO_DIRCLR              ADDR(0x5000051c)
-#define GPIO_PINCNF             ARRAY(0x50000700)
+    _REGISTER(unsigned volatile OUT, 0x004);
+    _REGISTER(unsigned volatile OUTSET, 0x008);
+    _REGISTER(unsigned volatile OUTCLR, 0x00c);
+    _REGISTER(unsigned volatile IN, 0x010);
+    _REGISTER(unsigned volatile DIR, 0x014);
+    _REGISTER(unsigned volatile DIRSET, 0x018);
+    _REGISTER(unsigned volatile DIRCLR, 0x01c);
+    _REGISTER(unsigned volatile PINCNF[32], 0x200);
 #define   GPIO_PINCNF_DIR 0, 1
 #define     GPIO_DIR_Input 0
 #define     GPIO_DIR_Output 1
@@ -178,28 +210,35 @@ argument to be a macro that expands the a 'position, width' pair. */
 #define     GPIO_SENSE_Disabled 0
 #define     GPIO_SENSE_High 2
 #define     GPIO_SENSE_Low 3
+};
+
+#define GPIO (* (_DEVSTRUCT _gpio *) 0x50000500)
 
 
 /* GPIOTE */
+_DEVSTRUCT _gpiote {
 /* Tasks */
-#define GPIOTE_OUT              ARRAY(0x40006000)
+    _REGISTER(unsigned volatile OUT[4], 0x000);
+    _REGISTER(unsigned volatile SET[4], 0x030);
+    _REGISTER(unsigned volatile CLR[4], 0x060);
 /* Events */
-#define GPIOTE_IN               ARRAY(0x40006100)
-#define GPIOTE_PORT              ADDR(0x4000617c)
+    _REGISTER(unsigned volatile IN[4], 0x100);
+    _REGISTER(unsigned volatile PORT, 0x17c);
 /* Registers */
-#define GPIOTE_INTEN             ADDR(0x40006300)
-#define GPIOTE_INTENSET          ADDR(0x40006304)
-#define GPIOTE_INTENCLR          ADDR(0x40006308)
-#define GPIOTE_CONFIG           ARRAY(0x40006510)
+    _REGISTER(unsigned volatile INTENSET, 0x304);
+    _REGISTER(unsigned volatile INTENCLR, 0x308);
+    _REGISTER(unsigned volatile CONFIG[4], 0x510);
 #define   GPIOTE_CONFIG_MODE 0, 2
 #define     GPIOTE_MODE_Event 1
 #define     GPIOTE_MODE_Task 3
-#define   GPIOTE_CONFIG_PSEL 8, 5
+#define   GPIOTE_CONFIG_PSEL 8, 6 /* Note 6 bits including port number */
 #define   GPIOTE_CONFIG_POLARITY 16, 2
 #define     GPIOTE_POLARITY_LoToHi 1
 #define     GPIOTE_POLARITY_HiToLo 2
 #define     GPIOTE_POLARITY_Toggle 3
 #define   GPIOTE_CONFIG_OUTINIT 20, 1
+};
+
 /* Interrupts */
 #define GPIOTE_INT_IN0 0
 #define GPIOTE_INT_IN1 1
@@ -207,67 +246,70 @@ argument to be a macro that expands the a 'position, width' pair. */
 #define GPIOTE_INT_IN3 3
 #define GPIOTE_INT_PORT 31
 
+#define GPIOTE (* (_DEVSTRUCT _gpiote *) 0x40006000)
+
 
 /* PPI */
-struct _ppi_chg {
-    unsigned volatile EN;
-    unsigned volatile DIS;
-};
-    
-struct _ppi_ch {
-    unsigned volatile *EEP;
-    unsigned volatile *TEP;
+_DEVSTRUCT _ppi {
+/* Tasks */
+    _REGISTER(struct {
+        unsigned volatile EN;
+        unsigned volatile DIS;
+    } CHG[6], 0x000);
+/* Registers */
+    _REGISTER(unsigned volatile CHEN, 0x500);
+    _REGISTER(unsigned volatile CHENSET, 0x504);
+    _REGISTER(unsigned volatile CHENCLR, 0x508);
+    _REGISTER(struct {
+        unsigned volatile * volatile EEP;
+        unsigned volatile * volatile TEP;       
+    } CH[20], 0x510);
+    _REGISTER(unsigned volatile CHGRP[6], 0x800);
 };
 
-#define PPI_CHG  ((struct _ppi_chg *) 0x4001f000)
-#define PPI_CHEN                 ADDR(0x4001f500)
-#define PPI_CHENSET              ADDR(0x4001f504)
-#define PPI_CHENCLR              ADDR(0x4001f508)
-#define PPI_CH    ((struct _ppi_ch *) 0x4001f510)
-#define PPI_CHGRP               ARRAY(0x4001f800)
+#define PPI (* (_DEVSTRUCT _ppi *) 0x4001f000)
 
 
 /* Radio */
+_DEVSTRUCT _radio {
 /* Tasks */
-#define RADIO_TXEN               ADDR(0x40001000)
-#define RADIO_RXEN               ADDR(0x40001004)
-#define RADIO_START              ADDR(0x40001008)
-#define RADIO_STOP               ADDR(0x4000100c)
-#define RADIO_DISABLE            ADDR(0x40001010)
-#define RADIO_RSSISTART          ADDR(0x40001014)
-#define RADIO_RSSISTOP           ADDR(0x40001018)
-#define RADIO_BCSTART            ADDR(0x4000101c)
-#define RADIO_BCSTOP             ADDR(0x40001020)
+    _REGISTER(unsigned volatile TXEN, 0x000);
+    _REGISTER(unsigned volatile RXEN, 0x004);
+    _REGISTER(unsigned volatile START, 0x008);
+    _REGISTER(unsigned volatile STOP, 0x00c);
+    _REGISTER(unsigned volatile DISABLE, 0x010);
+    _REGISTER(unsigned volatile RSSISTART, 0x014);
+    _REGISTER(unsigned volatile RSSISTOP, 0x018);
+    _REGISTER(unsigned volatile BCSTART, 0x01c);
+    _REGISTER(unsigned volatile BCSTOP, 0x020);
 /* Events */
-#define RADIO_READY              ADDR(0x40001100)
-#define RADIO_ADDRESS            ADDR(0x40001104)
-#define RADIO_PAYLOAD            ADDR(0x40001108)
-#define RADIO_END                ADDR(0x4000110c)
-#define RADIO_DISABLED           ADDR(0x40001110)
-#define RADIO_DEVMATCH           ADDR(0x40001114)
-#define RADIO_DEVMISS            ADDR(0x40001118)
-#define RADIO_RSSIEND            ADDR(0x4000111c)
-#define RADIO_BCMATCH            ADDR(0x40001128)
+    _REGISTER(unsigned volatile READY, 0x100);
+    _REGISTER(unsigned volatile ADDRESS, 0x104);
+    _REGISTER(unsigned volatile PAYLOAD, 0x108);
+    _REGISTER(unsigned volatile END, 0x10c);
+    _REGISTER(unsigned volatile DISABLED, 0x110);
+    _REGISTER(unsigned volatile DEVMATCH, 0x114);
+    _REGISTER(unsigned volatile DEVMISS, 0x118);
+    _REGISTER(unsigned volatile RSSIEND, 0x11c);
+    _REGISTER(unsigned volatile BCMATCH, 0x128);
 /* Registers */
-#define RADIO_SHORTS             ADDR(0x40001200)
-#define   RADIO_READY_START 0
-#define   RADIO_END_DISABLE 1
-#define RADIO_INTENSET           ADDR(0x40001304)
-#define RADIO_INTENCLR           ADDR(0x40001308)
-#define RADIO_CRCSTATUS          ADDR(0x40001400)
-#define RADIO_RXMATCH            ADDR(0x40001408)
-#define RADIO_RXCRC              ADDR(0x4000140c)
-#define RADIO_DAI                ADDR(0x40001410)
-#define RADIO_PACKETPTR          ADDR(0x40001504)
-#define RADIO_FREQUENCY          ADDR(0x40001508)
-#define RADIO_TXPOWER            ADDR(0x4000150c)
-#define RADIO_MODE               ADDR(0x40001510)
+    _REGISTER(unsigned volatile SHORTS, 0x200);
+    _REGISTER(unsigned volatile INTENSET, 0x304);
+    _REGISTER(unsigned volatile INTENCLR, 0x308);
+    _REGISTER(unsigned volatile CRCSTATUS, 0x400);
+    _REGISTER(unsigned volatile RXMATCH, 0x408);
+    _REGISTER(unsigned volatile RXCRC, 0x40c);
+    _REGISTER(unsigned volatile DAI, 0x410);
+    _REGISTER(void * volatile PACKETPTR, 0x504);
+    _REGISTER(unsigned volatile FREQUENCY, 0x508);
+    _REGISTER(unsigned volatile TXPOWER, 0x50c);
+    _REGISTER(unsigned volatile MODE, 0x510);
 #define   RADIO_MODE_NRF_1Mbit 0
-#define RADIO_PCNF0              ADDR(0x40001514)
+    _REGISTER(unsigned volatile PCNF0, 0x514);
 #define   RADIO_PCNF0_LFLEN 0, 3
 #define   RADIO_PCNF0_S0LEN 8, 1
 #define   RADIO_PCNF0_S1LEN 16, 4
-#define RADIO_PCNF1              ADDR(0x40001518)
+    _REGISTER(unsigned volatile PCNF1, 0x518);
 #define   RADIO_PCNF1_MAXLEN 0, 8
 #define   RADIO_PCNF1_STATLEN 8, 8
 #define   RADIO_PCNF1_BALEN 16, 3
@@ -275,201 +317,167 @@ struct _ppi_ch {
 #define     RADIO_ENDIAN_Little 0
 #define     RADIO_ENDIAN_Big 1
 #define   RADIO_PCNF1_WHITEEN 25
-#define RADIO_BASE0              ADDR(0x4000151c)
-#define RADIO_BASE1              ADDR(0x40001520)
-#define RADIO_PREFIX0            ADDR(0x40001524)
-#define RADIO_PREFIX1            ADDR(0x40001528)
-#define RADIO_TXADDRESS          ADDR(0x4000152c)
-#define RADIO_RXADDRESSES        ADDR(0x40001530)
-#define RADIO_CRCCNF             ADDR(0x40001534)
-#define RADIO_CRCPOLY            ADDR(0x40001538)
-#define RADIO_CRCINIT            ADDR(0x4000153c)
-#define RADIO_TEST               ADDR(0x40001540)
-#define RADIO_TIFS               ADDR(0x40001544)
-#define RADIO_RSSISAMPLE         ADDR(0x40001548)
-#define RADIO_STATE              ADDR(0x40001550)
-#define RADIO_DATAWHITEIV        ADDR(0x40001554)
-#define RADIO_BCC                ADDR(0x40001560)
-#define RADIO_DAB               ARRAY(0x40001600)
-#define RADIO_DAP               ARRAY(0x40001620)
-#define RADIO_DACNF              ADDR(0x40001640)
-#define RADIO_OVERRIDE          ARRAY(0x40001724)
-#define RADIO_POWER              ADDR(0x40001ffc)
+    _REGISTER(unsigned volatile BASE0, 0x51c);
+    _REGISTER(unsigned volatile BASE1, 0x520);
+    _REGISTER(unsigned volatile PREFIX0, 0x524);
+    _REGISTER(unsigned volatile PREFIX1, 0x528);
+    _REGISTER(unsigned volatile TXADDRESS, 0x52c);
+    _REGISTER(unsigned volatile RXADDRESSES, 0x530);
+    _REGISTER(unsigned volatile CRCCNF, 0x534);
+    _REGISTER(unsigned volatile CRCPOLY, 0x538);
+    _REGISTER(unsigned volatile CRCINIT, 0x53c);
+    _REGISTER(unsigned volatile TEST, 0x540);
+    _REGISTER(unsigned volatile TIFS, 0x544);
+    _REGISTER(unsigned volatile RSSISAMPLE, 0x548);
+    _REGISTER(unsigned volatile STATE, 0x550);
+    _REGISTER(unsigned volatile DATAWHITEIV, 0x554);
+    _REGISTER(unsigned volatile BCC, 0x560);
+    _REGISTER(unsigned volatile DAB[8], 0x600);
+    _REGISTER(unsigned volatile DAP[8], 0x620);
+    _REGISTER(unsigned volatile DACNF, 0x640);
+    _REGISTER(unsigned volatile OVERRIDE[5], 0x724);
+    _REGISTER(unsigned volatile POWER, 0xffc);
+};
+
 /* Interrupts */
 #define RADIO_INT_READY 0
 #define RADIO_INT_END 3
 #define RADIO_INT_DISABLED 4
 
+#define RADIO (* (_DEVSTRUCT _radio *) 0x40001000)
+
 
 /* TIMERS: Timer 0 is 8/16/24/32 bit, Timers 1 and 2 are 8/16 bit. */
-union _timer {
-    unsigned volatile reg[1];
-    unsigned volatile arr[1][1];
-    unsigned char strut[0x1000];
-};
 
-#define TIMER ((union _timer *) 0x40008000)
-
+_DEVSTRUCT _timer {
 /* Tasks */
-#define T_START                  REG(0x000)
-#define T_STOP                   REG(0x004)
-#define T_COUNT                  REG(0x008)
-#define T_CLEAR                  REG(0x00c)
-#define T_SHUTDOWN               REG(0x010)
-#define T_CAPTURE                ARR(0x040)
+    _REGISTER(unsigned volatile START, 0x000);
+    _REGISTER(unsigned volatile STOP, 0x004);
+    _REGISTER(unsigned volatile COUNT, 0x008);
+    _REGISTER(unsigned volatile CLEAR, 0x00c);
+    _REGISTER(unsigned volatile SHUTDOWN, 0x010);
+    _REGISTER(unsigned volatile CAPTURE[4], 0x040);
 /* Events */
-#define T_COMPARE                ARR(0x140)
+    _REGISTER(unsigned volatile COMPARE[4], 0x140);
 /* Registers */
-#define T_SHORTS                 REG(0x200)
-#define   TIMER_COMPARE0_CLEAR 0
-#define   TIMER_COMPARE1_CLEAR 1
-#define   TIMER_COMPARE2_CLEAR 2
-#define   TIMER_COMPARE3_CLEAR 3
-#define   TIMER_COMPARE0_STOP 8
-#define   TIMER_COMPARE1_STOP 9
-#define   TIMER_COMPARE2_STOP 10
-#define   TIMER_COMPARE3_STOP 11
-#define T_INTENSET               REG(0x304)
-#define T_INTENCLR               REG(0x308)
-#define   TIMER_INT_COMPARE0 16
-#define   TIMER_INT_COMPARE1 17
-#define   TIMER_INT_COMPARE2 18
-#define   TIMER_INT_COMPARE3 19
-#define T_MODE                   REG(0x504)
+    _REGISTER(unsigned volatile SHORTS, 0x200);
+    _REGISTER(unsigned volatile INTENSET, 0x304);
+    _REGISTER(unsigned volatile INTENCLR, 0x308);
+    _REGISTER(unsigned volatile MODE, 0x504);
 #define   TIMER_MODE_Timer 0
 #define   TIMER_MODE_Counter 1
-#define T_BITMODE                REG(0x508)
+    _REGISTER(unsigned volatile BITMODE, 0x508);
 #define   TIMER_BITMODE_16Bit 0
 #define   TIMER_BITMODE_8Bit 1
 #define   TIMER_BITMODE_24Bit 2
 #define   TIMER_BITMODE_32Bit 3
-#define T_PRESCALER              REG(0x510)
-#define T_CC                     ARR(0x540)
+    _REGISTER(unsigned volatile PRESCALER, 0x510);
+    _REGISTER(unsigned volatile CC[4], 0x540);
+};
 
-/* Timer 0 */
-#define TIMER0_START      TIMER[0].T_START
-#define TIMER0_STOP       TIMER[0].T_STOP
-#define TIMER0_COUNT      TIMER[0].T_COUNT
-#define TIMER0_CLEAR      TIMER[0].T_CLEAR
-#define TIMER0_SHUTDOWN   TIMER[0].T_SHUTDOWN
-#define TIMER0_CAPTURE    TIMER[0].T_CAPTURE
-#define TIMER0_COMPARE    TIMER[0].T_COMPARE
-#define TIMER0_SHORTS     TIMER[0].T_SHORTS
-#define TIMER0_INTENSET   TIMER[0].T_INTENSET
-#define TIMER0_INTENCLR   TIMER[0].T_INTENCLR
-#define TIMER0_MODE       TIMER[0].T_MODE
-#define TIMER0_BITMODE    TIMER[0].T_BITMODE
-#define TIMER0_PRESCALER  TIMER[0].T_PRESCALER
-#define TIMER0_CC         TIMER[0].T_CC
+/* Interrupts */
+#define TIMER_INT_COMPARE0 16
+#define TIMER_INT_COMPARE1 17
+#define TIMER_INT_COMPARE2 18
+#define TIMER_INT_COMPARE3 19
+/* Shortcuts */
+#define TIMER_COMPARE0_CLEAR 0
+#define TIMER_COMPARE1_CLEAR 1
+#define TIMER_COMPARE2_CLEAR 2
+#define TIMER_COMPARE3_CLEAR 3
+#define TIMER_COMPARE0_STOP 8
+#define TIMER_COMPARE1_STOP 9
+#define TIMER_COMPARE2_STOP 10
+#define TIMER_COMPARE3_STOP 11
 
-/* Timer 1 */
-#define TIMER1_START      TIMER[1].T_START
-#define TIMER1_STOP       TIMER[1].T_STOP
-#define TIMER1_COUNT      TIMER[1].T_COUNT
-#define TIMER1_CLEAR      TIMER[1].T_CLEAR
-#define TIMER1_SHUTDOWN   TIMER[1].T_SHUTDOWN
-#define TIMER1_CAPTURE    TIMER[1].T_CAPTURE
-#define TIMER1_COMPARE    TIMER[1].T_COMPARE
-#define TIMER1_SHORTS     TIMER[1].T_SHORTS
-#define TIMER1_INTENSET   TIMER[1].T_INTENSET
-#define TIMER1_INTENCLR   TIMER[1].T_INTENCLR
-#define TIMER1_MODE       TIMER[1].T_MODE
-#define TIMER1_BITMODE    TIMER[1].T_BITMODE
-#define TIMER1_PRESCALER  TIMER[1].T_PRESCALER
-#define TIMER1_CC         TIMER[1].T_CC
+#define TIMER0 (* (_DEVSTRUCT _timer *) 0x40008000)
+#define TIMER1 (* (_DEVSTRUCT _timer *) 0x40009000)
+#define TIMER2 (* (_DEVSTRUCT _timer *) 0x4000a000)
 
-/* Timer 2 */
-#define TIMER2_START      TIMER[2].T_START
-#define TIMER2_STOP       TIMER[2].T_STOP
-#define TIMER2_COUNT      TIMER[2].T_COUNT
-#define TIMER2_CLEAR      TIMER[2].T_CLEAR
-#define TIMER2_SHUTDOWN   TIMER[2].T_SHUTDOWN
-#define TIMER2_CAPTURE    TIMER[2].T_CAPTURE
-#define TIMER2_COMPARE    TIMER[2].T_COMPARE
-#define TIMER2_SHORTS     TIMER[2].T_SHORTS
-#define TIMER2_INTENSET   TIMER[2].T_INTENSET
-#define TIMER2_INTENCLR   TIMER[2].T_INTENCLR
-#define TIMER2_MODE       TIMER[2].T_MODE
-#define TIMER2_BITMODE    TIMER[2].T_BITMODE
-#define TIMER2_PRESCALER  TIMER[2].T_PRESCALER
-#define TIMER2_CC         TIMER[2].T_CC
+extern _DEVSTRUCT _timer * const TIMER[3];
 
 
 /* Random Number Generator */
+_DEVSTRUCT _rng {
 /* Tasks */
-#define RNG_START                ADDR(0x4000D000)
-#define RNG_STOP                 ADDR(0x4000D004)
+    _REGISTER(unsigned volatile START, 0x000);
+    _REGISTER(unsigned volatile STOP, 0x004);
 /* Events */
-#define RNG_VALRDY               ADDR(0x4000D100)
+    _REGISTER(unsigned volatile VALRDY, 0x100);
 /* Registers */
-#define RNG_SHORTS               ADDR(0x4000D200)
-#define RNG_INTEN                ADDR(0x4000D300)
-#define RNG_INTENSET             ADDR(0x4000D304)
-#define RNG_INTENCLR             ADDR(0x4000D308)
-#define RNG_CONFIG               ADDR(0x4000D504)
+    _REGISTER(unsigned volatile SHORTS, 0x200);
+    _REGISTER(unsigned volatile INTEN, 0x300);
+    _REGISTER(unsigned volatile INTENSET, 0x304);
+    _REGISTER(unsigned volatile INTENCLR, 0x308);
+    _REGISTER(unsigned volatile CONFIG, 0x504);
 #define   RNG_CONFIG_DERCEN 0
-#define RNG_VALUE                ADDR(0x4000D508)
+    _REGISTER(unsigned volatile VALUE, 0x508);
+};
+
 /* Interrupts */
 #define RNG_INT_VALRDY 0
 
+#define RNG (* (_DEVSTRUCT _rng *) 0x4000d000)
+
 
 /* Temperature sensor */
+_DEVSTRUCT _temp {
 /* Tasks */
-#define TEMP_START               ADDR(0x4000C000)
-#define TEMP_STOP                ADDR(0x4000C004)
+    _REGISTER(unsigned volatile START, 0x000);
+    _REGISTER(unsigned volatile STOP, 0x004);
 /* Events */
-#define TEMP_DATARDY             ADDR(0x4000C100)
+    _REGISTER(unsigned volatile DATARDY, 0x100);
 /* Registers */
-#define TEMP_INTEN               ADDR(0x4000C300)
-#define TEMP_INTENSET            ADDR(0x4000C304)
-#define TEMP_INTENCLR            ADDR(0x4000C308)
-#define TEMP_TEMP                ADDR(0x4000C508)
+    _REGISTER(unsigned volatile INTEN, 0x300);
+    _REGISTER(unsigned volatile INTENSET, 0x304);
+    _REGISTER(unsigned volatile INTENCLR, 0x308);
+    _REGISTER(unsigned volatile VALUE, 0x508);
+};
+
 /* Interrupts */
 #define TEMP_INT_DATARDY 0
 
+#define TEMP (* (_DEVSTRUCT _temp *) 0x4000c000)
 
-/* I2C -- Interface 0 */
-union _i2c {
-    unsigned volatile reg[1];
-    unsigned char strut[0x1000];
-};
 
-#define I2C ((union _i2c *) 0x40003000)
-
+/* I2C */
+_DEVSTRUCT _i2c {
 /* Tasks */
-#define I_STARTRX                REG(0x000)
-#define I_STARTTX                REG(0x008)
-#define I_STOP                   REG(0x014)
-#define I_SUSPEND                REG(0x01c)
-#define I_RESUME                 REG(0x020)
+    _REGISTER(unsigned volatile STARTRX, 0x000);
+    _REGISTER(unsigned volatile STARTTX, 0x008);
+    _REGISTER(unsigned volatile STOP, 0x014);
+    _REGISTER(unsigned volatile SUSPEND, 0x01c);
+    _REGISTER(unsigned volatile RESUME, 0x020);
 /* Events */
-#define I_STOPPED                REG(0x104)
-#define I_RXDREADY               REG(0x108)
-#define I_TXDSENT                REG(0x11c)
-#define I_ERROR                  REG(0x124)
-#define I_BB                     REG(0x138)
-#define I_SUSPENDED              REG(0x148)
+    _REGISTER(unsigned volatile STOPPED, 0x104);
+    _REGISTER(unsigned volatile RXDREADY, 0x108);
+    _REGISTER(unsigned volatile TXDSENT, 0x11c);
+    _REGISTER(unsigned volatile ERROR, 0x124);
+    _REGISTER(unsigned volatile BB, 0x138);
+    _REGISTER(unsigned volatile SUSPENDED, 0x148);
 /* Registers */
-#define I_SHORTS                 REG(0x200)
-#define I_INTEN                  REG(0x300)
-#define I_INTENSET               REG(0x304)
-#define I_INTENCLR               REG(0x308)
-#define I_ERRORSRC               REG(0x4c4)
+    _REGISTER(unsigned volatile SHORTS, 0x200);
+    _REGISTER(unsigned volatile INTEN, 0x300);
+    _REGISTER(unsigned volatile INTENSET, 0x304);
+    _REGISTER(unsigned volatile INTENCLR, 0x308);
+    _REGISTER(unsigned volatile ERRORSRC, 0x4c4);
 #define   I2C_ERRORSRC_OVERRUN 0
 #define   I2C_ERRORSRC_ANACK 1
 #define   I2C_ERRORSRC_DNACK 2
 #define   I2C_ERRORSRC_All 0x7
-#define I_ENABLE                 REG(0x500) 
+    _REGISTER(unsigned volatile ENABLE, 0x500) ;
 #define   I2C_ENABLE_Disabled 0
 #define   I2C_ENABLE_Enabled 5
-#define I_PSELSCL                REG(0x508)
-#define I_PSELSDA                REG(0x50c)
-#define I_RXD                    REG(0x518)
-#define I_TXD                    REG(0x51c) 
-#define I_FREQUENCY              REG(0x524)
+    _REGISTER(unsigned volatile PSELSCL, 0x508);
+    _REGISTER(unsigned volatile PSELSDA, 0x50c);
+    _REGISTER(unsigned volatile RXD, 0x518);
+    _REGISTER(unsigned volatile TXD, 0x51c) ;
+    _REGISTER(unsigned volatile FREQUENCY, 0x524);
 #define   I2C_FREQUENCY_100kHz 0x01980000
-#define I_ADDRESS                REG(0x588)
-#define I_POWER                  REG(0xffc)
+    _REGISTER(unsigned volatile ADDRESS, 0x588);
+    _REGISTER(unsigned volatile POWER, 0xffc);
+};
+    
 /* Interrupts */
 #define I2C_INT_STOPPED 1
 #define I2C_INT_RXDREADY 2
@@ -480,67 +488,79 @@ union _i2c {
 #define I2C_BB_SUSPEND 0
 #define I2C_BB_STOP 1
 
+/* Microbian's I2C driver is written to support multiple instances, so
+let's make an array, even though the V1 has only one I2C interface. */
+
+#define I2C0 (* (_DEVSTRUCT _i2c *) 0x40003000)
+
+extern _DEVSTRUCT _i2c * const I2C[1];
+
 
 /* UART */
+_DEVSTRUCT _uart {
 /* Tasks */
-#define UART_STARTRX             ADDR(0x40002000)
-#define UART_STARTTX             ADDR(0x40002008)
+    _REGISTER(unsigned volatile STARTRX, 0x000);
+    _REGISTER(unsigned volatile STARTTX, 0x008);
 /* Events */
-#define UART_RXDRDY              ADDR(0x40002108)
-#define UART_TXDRDY              ADDR(0x4000211c)
+    _REGISTER(unsigned volatile RXDRDY, 0x108);
+    _REGISTER(unsigned volatile TXDRDY, 0x11c);
 /* Registers */
-#define UART_INTEN               ADDR(0x40002300)
-#define UART_INTENSET            ADDR(0x40002304)
-#define UART_INTENCLR            ADDR(0x40002308)
-#define UART_ENABLE              ADDR(0x40002500)
+    _REGISTER(unsigned volatile INTENSET, 0x304);
+    _REGISTER(unsigned volatile INTENCLR, 0x308);
+    _REGISTER(unsigned volatile ENABLE, 0x500);
 #define   UART_ENABLE_Disabled 0
 #define   UART_ENABLE_Enabled 4
-#define UART_PSELTXD             ADDR(0x4000250c)
-#define UART_PSELRXD             ADDR(0x40002514)
-#define UART_RXD                 ADDR(0x40002518)
-#define UART_TXD                 ADDR(0x4000251c)
-#define UART_BAUDRATE            ADDR(0x40002524)
+    _REGISTER(unsigned volatile PSELTXD, 0x50c);
+    _REGISTER(unsigned volatile PSELRXD, 0x514);
+    _REGISTER(unsigned volatile RXD, 0x518);
+    _REGISTER(unsigned volatile TXD, 0x51c);
+    _REGISTER(unsigned volatile BAUDRATE, 0x524);
 #define   UART_BAUDRATE_1200   0x0004f000
 #define   UART_BAUDRATE_2400   0x0009d000
 #define   UART_BAUDRATE_4800   0x0013b000
 #define   UART_BAUDRATE_9600   0x00275000
-#define   UART_BAUDRATE_14400  0x003b0000
+#define   UART_BAUDRATE_14400  0x003af000
 #define   UART_BAUDRATE_19200  0x004ea000
-#define   UART_BAUDRATE_28800  0x0075f000
+#define   UART_BAUDRATE_28800  0x0075c000
 #define   UART_BAUDRATE_31250  0x00800000
-#define   UART_BAUDRATE_38400  0x009d5000
+#define   UART_BAUDRATE_38400  0x009d0000
 #define   UART_BAUDRATE_56000  0x00e50000
-#define   UART_BAUDRATE_57600  0x00ebf000
+#define   UART_BAUDRATE_57600  0x00eb0000
 #define   UART_BAUDRATE_76800  0x013a9000
-#define   UART_BAUDRATE_115200 0x01d7e000
-#define   UART_BAUDRATE_230400 0x03afb000
+#define   UART_BAUDRATE_115200 0x01d60000
+#define   UART_BAUDRATE_230400 0x03b00000
 #define   UART_BAUDRATE_250000 0x04000000
-#define   UART_BAUDRATE_460800 0x075f7000
-#define   UART_BAUDRATE_921600 0x0ebed000
+#define   UART_BAUDRATE_460800 0x07400000
+#define   UART_BAUDRATE_921600 0x0f000000
 #define   UART_BAUDRATE_1M     0x10000000
-#define UART_CONFIG              ADDR(0x4000256c)
+    _REGISTER(unsigned volatile CONFIG, 0x56c);
 #define   UART_CONFIG_HWFC 0
 #define   UART_CONFIG_PARITY 1, 3
 #define     UART_PARITY_None 0
 #define     UART_PARITY_Even 7
+};
+
 /* Interrupts */
-#define UART_INT_RXDRDY 2
-#define UART_INT_TXDRDY 7
+#define   UART_INT_RXDRDY 2
+#define   UART_INT_TXDRDY 7
+
+#define UART (* (_DEVSTRUCT _uart *) 0x40002000)
 
 
 /* ADC */
+_DEVSTRUCT _adc {
 /* Tasks */
-#define ADC_START                ADDR(0x40007000)
-#define ADC_STOP                 ADDR(0x40007004)
+    _REGISTER(unsigned volatile START, 0x000);
+    _REGISTER(unsigned volatile STOP, 0x004);
 /* Events */
-#define ADC_END                  ADDR(0x40007100)
+    _REGISTER(unsigned volatile END, 0x100);
 /* Registers */
-#define ADC_INTEN                ADDR(0x40007300)
-#define ADC_INTENSET             ADDR(0x40007304)
-#define ADC_INTENCLR             ADDR(0x40007308)
-#define ADC_BUSY                 ADDR(0x40007400)
-#define ADC_ENABLE               ADDR(0x40007500)
-#define ADC_CONFIG               ADDR(0x40007504)
+    _REGISTER(unsigned volatile INTEN, 0x300);
+    _REGISTER(unsigned volatile INTENSET, 0x304);
+    _REGISTER(unsigned volatile INTENCLR, 0x308);
+    _REGISTER(unsigned volatile BUSY, 0x400);
+    _REGISTER(unsigned volatile ENABLE, 0x500);
+    _REGISTER(unsigned volatile CONFIG, 0x504);
 #define   ADC_CONFIG_RES 0, 2
 #define     ADC_RES_8Bit 0
 #define     ADC_RES_9bit 1
@@ -560,9 +580,13 @@ union _i2c {
 #define   ADC_CONFIG_EXTREFSEL 16, 2
 #define     ADC_EXTREFSEL_Ref0 1
 #define     ADC_EXTREFSEL_Ref1 2
-#define ADC_RESULT               ADDR(0x40007508)
+    _REGISTER(unsigned volatile RESULT, 0x508);
+};
+
 /* Interrupts */
 #define ADC_INT_END 0
+
+#define ADC (* (_DEVSTRUCT _adc *) 0x40007000)
 
     
 /* NVIC stuff */
@@ -571,19 +595,19 @@ union _i2c {
 void irq_priority(int irq, unsigned priority);
 
 /* enable_irq -- enable interrupts from an IRQ */
-#define enable_irq(irq)  NVIC_ISER[0] = BIT(irq)
+#define enable_irq(irq)  NVIC.ISER[0] = BIT(irq)
 
 /* disable_irq -- disable interrupts from a specific IRQ */
-#define disable_irq(irq)  NVIC_ICER[0] = BIT(irq)
+#define disable_irq(irq)  NVIC.ICER[0] = BIT(irq)
 
 /* clear_pending -- clear pending interrupt from an IRQ */
-#define clear_pending(irq)  NVIC_ICPR[0] = BIT(irq)
+#define clear_pending(irq)  NVIC.ICPR[0] = BIT(irq)
 
-/* reschedule -- request PendSC interrupt */
-#define reschedule()  SCB_ICSR = BIT(SCB_ICSR_PENDSVSET)
+/* reschedule -- request PendSV interrupt */
+#define reschedule()  SCB.ICSR = BIT(SCB_ICSR_PENDSVSET)
 
-/* active_irq -- find active interrupt: -16 to 31 */
-#define active_irq()  (GET_FIELD(SCB_ICSR, SCB_ICSR_VECTACTIVE) - 16)
+/* active_irq -- find active interrupt: returns -16 to 31 */
+#define active_irq()  (GET_FIELD(SCB.ICSR, SCB_ICSR_VECTACTIVE) - 16)
 
 /* delay_loop -- timed delay */
 void delay_loop(unsigned usec);
@@ -594,32 +618,32 @@ void delay_loop(unsigned usec);
 /* gpio_dir -- set GPIO direction */
 inline void gpio_dir(unsigned pin, unsigned dir) {
     if (dir)
-        GPIO_DIRSET = BIT(pin);
+        GPIO.DIRSET = BIT(pin);
     else
-        GPIO_DIRCLR = BIT(pin);
+        GPIO.DIRCLR = BIT(pin);
 }
 
 /* gpio_connect -- connect pin for input */
 inline void gpio_connect(unsigned pin) {
-    SET_FIELD(GPIO_PINCNF[pin], GPIO_PINCNF_INPUT, GPIO_INPUT_Connect);
+    SET_FIELD(GPIO.PINCNF[pin], GPIO_PINCNF_INPUT, GPIO_INPUT_Connect);
 }
 
 /* gpio_drive -- set GPIO drive strength */
 inline void gpio_drive(unsigned pin, unsigned mode) {
-    SET_FIELD(GPIO_PINCNF[pin], GPIO_PINCNF_DRIVE, mode);
+    SET_FIELD(GPIO.PINCNF[pin], GPIO_PINCNF_DRIVE, mode);
 }
 
 /* gpio_out -- set GPIO output value */
 inline void gpio_out(unsigned pin, unsigned value) {
     if (value)
-        GPIO_OUTSET = BIT(pin);
+        GPIO.OUTSET = BIT(pin);
     else
-        GPIO_OUTCLR = BIT(pin);
+        GPIO.OUTCLR = BIT(pin);
 }
 
 /* gpio_in -- get GPIO input bit */
 inline unsigned gpio_in(unsigned pin) {
-    return GET_BIT(GPIO_IN, pin);
+    return GET_BIT(GPIO.IN, pin);
 }
 
 
@@ -629,8 +653,8 @@ inline unsigned gpio_in(unsigned pin) {
 
 typedef unsigned image[NIMG];
 
-#define __ROW(r, c1, c2, c3, c4, c5, c6, c7, c8, c9)                   \
-    (BIT(r+13) | !c1<<4 | !c2<<5 | !c3<<6 | !c4<<7 | !c5<<8            \
+#define __ROW(r, c1, c2, c3, c4, c5, c6, c7, c8, c9)                 \
+    (BIT(r) | !c1<<4 | !c2<<5 | !c3<<6 | !c4<<7 | !c5<<8             \
      | !c6<<9 | !c7<<10 | !c8<<11 | !c9<<12)
 
 #define IMAGE(x11, x24, x12, x25, x13,                               \
@@ -638,15 +662,15 @@ typedef unsigned image[NIMG];
               x22, x19, x23, x39, x21,                               \
               x18, x17, x16, x15, x14,                               \
               x33, x27, x31, x26, x32)                               \
-    { __ROW(0, x11, x12, x13, x14, x15, x16, x17, x18, x19),         \
-      __ROW(1, x21, x22, x23, x24, x25, x26, x27, 0, 0),             \
-      __ROW(2, x31, x32, x33, x34, x35, x36, x37, x38, x39) }
+    { __ROW(ROW1, x11, x12, x13, x14, x15, x16, x17, x18, x19),      \
+      __ROW(ROW2, x21, x22, x23, x24, x25, x26, x27, 0, 0),          \
+      __ROW(ROW3, x31, x32, x33, x34, x35, x36, x37, x38, x39) }
 
 #define LED_MASK 0xfff0
 
-#define led_init()  GPIO_DIRSET = LED_MASK
-#define led_dot()   GPIO_OUTSET = 0x5fbf
-#define led_off()   GPIO_OUTCLR = LED_MASK
+#define led_init()  GPIO.DIRSET = LED_MASK
+#define led_dot()   GPIO.OUTSET = 0x5fbf
+#define led_off()   GPIO.OUTCLR = LED_MASK
 
 
 /* CODERAM -- mark function for copying to RAM (disabled on V1) */

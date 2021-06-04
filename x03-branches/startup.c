@@ -67,9 +67,9 @@ extern unsigned char __data_start[], __data_end[],
 void __reset(void)
 {
     /* Activate the crystal clock */
-    CLOCK_HFCLKSTARTED = 0;
-    CLOCK_HFCLKSTART = 1;
-    while (! CLOCK_HFCLKSTARTED) { }
+    CLOCK.HFCLKSTARTED = 0;
+    CLOCK.HFCLKSTART = 1;
+    while (! CLOCK.HFCLKSTARTED) { }
 
     int data_size = __data_end - __data_start;
     int bss_size = __bss_end - __bss_start;
@@ -91,13 +91,22 @@ implemented.*/
 void irq_priority(int irq, unsigned prio)
 {
     if (irq < 0)
-        SET_BYTE(SCB_SHPR[(irq+8) >> 2], irq & 0x3, prio);
+        SET_BYTE(SCB.SHPR[(irq+12) >> 2], irq & 0x3, prio);
     else
-        SET_BYTE(NVIC_IPR[irq >> 2], irq & 0x3, prio);
+        SET_BYTE(NVIC.IPR[irq >> 2], irq & 0x3, prio);
 }
      
 /* See hardware.h for macros enable_irq, disable_irq, 
 clear_pending, reschedule */
+
+/* Device register arrays */
+_DEVSTRUCT _i2c * const I2C[1] = {
+    &I2C0
+};
+
+_DEVSTRUCT _timer * const TIMER[3] = {
+    &TIMER0, &TIMER1, &TIMER2
+};
 
 
 /*  INTERRUPT VECTORS */
@@ -123,11 +132,11 @@ void spin(void)
 {
     intr_disable();
 
-    GPIO_DIR = 0xfff0;
+    GPIO.DIR = 0xfff0;
     while (1) {
-        GPIO_OUT = 0x4000;
+        GPIO.OUT = 0x4000;
         delay_loop(500000);
-        GPIO_OUT = 0;
+        GPIO.OUT = 0;
         delay_loop(100000);
     }          
 }

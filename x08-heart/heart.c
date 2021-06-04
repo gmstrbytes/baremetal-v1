@@ -32,7 +32,7 @@ void show(const unsigned *img, int n)
     while (n-- > 0) {
         /* Takes 15msec per iteration */
         for (int p = 0; p < 3; p++) {
-            GPIO_OUT = img[p];
+            GPIO.OUT = img[p];
             delay(JIFFY);
         }
     }
@@ -41,20 +41,19 @@ void show(const unsigned *img, int n)
 /* pressed -- test if a button is pressed */
 int pressed(int button)
 {
-    return (GPIO_IN & BIT(button)) == 0;
+    return (GPIO.IN & BIT(button)) == 0;
 }
 
-/* init -- main program */
 void init(void)
 {
-    GPIO_DIR = 0xfff0;
-    GPIO_PINCNF[BUTTON_A] = 0;
-    GPIO_PINCNF[BUTTON_B] = 0;
+    GPIO.DIR = 0xfff0;
+    GPIO.PINCNF[BUTTON_A] = 0;
+    GPIO.PINCNF[BUTTON_B] = 0;
 
     /* Set row pins to high-drive mode to increase brightness */
-    SET_FIELD(GPIO_PINCNF[13], GPIO_PINCNF_DRIVE, GPIO_DRIVE_S0H1);
-    SET_FIELD(GPIO_PINCNF[14], GPIO_PINCNF_DRIVE, GPIO_DRIVE_S0H1);
-    SET_FIELD(GPIO_PINCNF[15], GPIO_PINCNF_DRIVE, GPIO_DRIVE_S0H1);
+    gpio_drive(ROW1, GPIO_DRIVE_S0H1);
+    gpio_drive(ROW2, GPIO_DRIVE_S0H1);
+    gpio_drive(ROW3, GPIO_DRIVE_S0H1);
 
     while (1) {
         show(heart, 70);

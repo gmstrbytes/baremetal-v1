@@ -1,7 +1,7 @@
-# x31/Makefile
+# x33/Makefile
 # Copyright (c) 2020-21 J. M. Spivey
 
-all: decode.hex
+all: clock.hex
 
 CC = arm-none-eabi-gcc
 CPU = -mcpu=cortex-m0 -mthumb
@@ -44,4 +44,4 @@ clean:
 
 ###
 
-decode.o: microbian.h hardware.h lib.h
+clock.o: microbian.h hardware.h lib.h
