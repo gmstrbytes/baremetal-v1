@@ -96,101 +96,99 @@ argument to be a macro that expands the a 'position, width' pair. */
 
 
 /* Device register structures */
-#define _DEVSTRUCT union
-#define __concat(x, y) x##y /* Don't ask! */
-#define _PADDING(offset, line) unsigned char __concat(_pad_, line)[offset]
+#define _DEVICE  union
 #define _REGISTER(decl, offset) \
-    struct { _PADDING(offset, __LINE__); decl; }
+    struct { unsigned char __pad##offset[offset]; decl; }
 
 
 /* System contol block */
-_DEVSTRUCT _scb {
-    _REGISTER(unsigned volatile CPUID, 0x00);
-    _REGISTER(unsigned volatile ICSR, 0x04);
+_DEVICE _scb {
+    _REGISTER(unsigned CPUID, 0x00);
+    _REGISTER(unsigned ICSR, 0x04);
 #define   SCB_ICSR_PENDSVSET 28
 #define   SCB_ICSR_VECTACTIVE 0, 8
-    _REGISTER(unsigned volatile SCR, 0x10);
+    _REGISTER(unsigned SCR, 0x10);
 #define   SCB_SCR_SLEEPONEXIT 1
 #define   SCB_SCR_SLEEPDEEP 2
 #define   SCB_SCR_SEVONPEND 4
-    _REGISTER(unsigned volatile SHPR[3], 0x18);
+    _REGISTER(unsigned SHPR[3], 0x18);
 };
 
-#define SCB (* (_DEVSTRUCT _scb *) 0xe000ed00)
+#define SCB (* (volatile _DEVICE _scb *) 0xe000ed00)
 
 
 /* Nested vectored interupt controller */
-_DEVSTRUCT _nvic {
-    _REGISTER(unsigned volatile ISER[8], 0x100);
-    _REGISTER(unsigned volatile ICER[8], 0x180);
-    _REGISTER(unsigned volatile ISPR[8], 0x200);
-    _REGISTER(unsigned volatile ICPR[8], 0x280);
-    _REGISTER(unsigned volatile IPR[60], 0x400);
+_DEVICE _nvic {
+    _REGISTER(unsigned ISER[8], 0x100);
+    _REGISTER(unsigned ICER[8], 0x180);
+    _REGISTER(unsigned ISPR[8], 0x200);
+    _REGISTER(unsigned ICPR[8], 0x280);
+    _REGISTER(unsigned IPR[60], 0x400);
 };
 
-#define NVIC (* (_DEVSTRUCT _nvic *) 0xe000e000)
+#define NVIC (* (volatile _DEVICE _nvic *) 0xe000e000)
 
 
 /* Clock control */
-_DEVSTRUCT _clock {
-    _REGISTER(unsigned volatile HFCLKSTART, 0x000);
-    _REGISTER(unsigned volatile LFCLKSTART, 0x008);
-    _REGISTER(unsigned volatile HFCLKSTARTED, 0x100);
-    _REGISTER(unsigned volatile LFCLKSTARTED, 0x104);
-    _REGISTER(unsigned volatile LFCLKSRC, 0x518);
+_DEVICE _clock {
+    _REGISTER(unsigned HFCLKSTART, 0x000);
+    _REGISTER(unsigned LFCLKSTART, 0x008);
+    _REGISTER(unsigned HFCLKSTARTED, 0x100);
+    _REGISTER(unsigned LFCLKSTARTED, 0x104);
+    _REGISTER(unsigned LFCLKSRC, 0x518);
 #define   CLOCK_LFCLKSRC_RC 0
-    _REGISTER(unsigned volatile XTALFREQ, 0x550);
+    _REGISTER(unsigned XTALFREQ, 0x550);
 #define   CLOCK_XTALFREQ_16MHz 0xFF
 };
 
-#define CLOCK (* (_DEVSTRUCT _clock *) 0x40000000)
+#define CLOCK (* (volatile _DEVICE _clock *) 0x40000000)
 
 
 /* Memory protection unit */
-_DEVSTRUCT _mpu {
-    _REGISTER(unsigned volatile DISABLEINDEBUG, 0x608);
+_DEVICE _mpu {
+    _REGISTER(unsigned DISABLEINDEBUG, 0x608);
 };
 
-#define MPU (* (_DEVSTRUCT _mpu *) 0x40000000)
+#define MPU (* (volatile _DEVICE _mpu *) 0x40000000)
 
 
 /* Factory information */
-_DEVSTRUCT _ficr {
-    _REGISTER(unsigned volatile DEVICEID[2], 0x060);
-    _REGISTER(unsigned volatile DEVICEADDR[2], 0x0a4);
-    _REGISTER(unsigned volatile OVERRIDEEN, 0x0a0);
+_DEVICE _ficr {
+    _REGISTER(unsigned DEVICEID[2], 0x060);
+    _REGISTER(unsigned DEVICEADDR[2], 0x0a4);
+    _REGISTER(unsigned OVERRIDEEN, 0x0a0);
 #define   FICR_OVERRIDEEN_NRF 0
-    _REGISTER(unsigned volatile NRF_1MBIT[5], 0x0b0);
+    _REGISTER(unsigned NRF_1MBIT[5], 0x0b0);
 };
 
-#define FICR (* (_DEVSTRUCT _ficr *) 0x10000000)
+#define FICR (* (volatile _DEVICE _ficr *) 0x10000000)
 
 
 /* Non-Volatile Memory Controller */
-_DEVSTRUCT _nvmc {
-    _REGISTER(unsigned volatile READY, 0x400);
-    _REGISTER(unsigned volatile CONFIG, 0x504);
+_DEVICE _nvmc {
+    _REGISTER(unsigned READY, 0x400);
+    _REGISTER(unsigned CONFIG, 0x504);
 #define   NVMC_CONFIG_WEN 0
 #define   NVMC_CONFIG_EEN 1   
-    _REGISTER(void * volatile ERASEPAGE, 0x508);
-    _REGISTER(unsigned volatile ICACHECONF, 0x540);
+    _REGISTER(void *ERASEPAGE, 0x508);
+    _REGISTER(unsigned ICACHECONF, 0x540);
 #define   NVMC_ICACHECONF_CACHEEN 0
 };
 
-#define NVMC (* (_DEVSTRUCT _nvmc *) 0x4001e000)
+#define NVMC (* (volatile _DEVICE _nvmc *) 0x4001e000)
 
 
 /* GPIO */
-_DEVSTRUCT _gpio {
+_DEVICE _gpio {
 /* Registers */
-    _REGISTER(unsigned volatile OUT, 0x004);
-    _REGISTER(unsigned volatile OUTSET, 0x008);
-    _REGISTER(unsigned volatile OUTCLR, 0x00c);
-    _REGISTER(unsigned volatile IN, 0x010);
-    _REGISTER(unsigned volatile DIR, 0x014);
-    _REGISTER(unsigned volatile DIRSET, 0x018);
-    _REGISTER(unsigned volatile DIRCLR, 0x01c);
-    _REGISTER(unsigned volatile PINCNF[32], 0x200);
+    _REGISTER(unsigned OUT, 0x004);
+    _REGISTER(unsigned OUTSET, 0x008);
+    _REGISTER(unsigned OUTCLR, 0x00c);
+    _REGISTER(unsigned IN, 0x010);
+    _REGISTER(unsigned DIR, 0x014);
+    _REGISTER(unsigned DIRSET, 0x018);
+    _REGISTER(unsigned DIRCLR, 0x01c);
+    _REGISTER(unsigned PINCNF[32], 0x200);
 #define   GPIO_PINCNF_DIR 0, 1
 #define     GPIO_DIR_Input 0
 #define     GPIO_DIR_Output 1
@@ -212,22 +210,22 @@ _DEVSTRUCT _gpio {
 #define     GPIO_SENSE_Low 3
 };
 
-#define GPIO (* (_DEVSTRUCT _gpio *) 0x50000500)
+#define GPIO (* (volatile _DEVICE _gpio *) 0x50000500)
 
 
 /* GPIOTE */
-_DEVSTRUCT _gpiote {
+_DEVICE _gpiote {
 /* Tasks */
-    _REGISTER(unsigned volatile OUT[4], 0x000);
-    _REGISTER(unsigned volatile SET[4], 0x030);
-    _REGISTER(unsigned volatile CLR[4], 0x060);
+    _REGISTER(unsigned OUT[4], 0x000);
+    _REGISTER(unsigned SET[4], 0x030);
+    _REGISTER(unsigned CLR[4], 0x060);
 /* Events */
-    _REGISTER(unsigned volatile IN[4], 0x100);
-    _REGISTER(unsigned volatile PORT, 0x17c);
+    _REGISTER(unsigned IN[4], 0x100);
+    _REGISTER(unsigned PORT, 0x17c);
 /* Registers */
-    _REGISTER(unsigned volatile INTENSET, 0x304);
-    _REGISTER(unsigned volatile INTENCLR, 0x308);
-    _REGISTER(unsigned volatile CONFIG[4], 0x510);
+    _REGISTER(unsigned INTENSET, 0x304);
+    _REGISTER(unsigned INTENCLR, 0x308);
+    _REGISTER(unsigned CONFIG[4], 0x510);
 #define   GPIOTE_CONFIG_MODE 0, 2
 #define     GPIOTE_MODE_Event 1
 #define     GPIOTE_MODE_Task 3
@@ -246,70 +244,70 @@ _DEVSTRUCT _gpiote {
 #define GPIOTE_INT_IN3 3
 #define GPIOTE_INT_PORT 31
 
-#define GPIOTE (* (_DEVSTRUCT _gpiote *) 0x40006000)
+#define GPIOTE (* (volatile _DEVICE _gpiote *) 0x40006000)
 
 
 /* PPI */
-_DEVSTRUCT _ppi {
+_DEVICE _ppi {
 /* Tasks */
     _REGISTER(struct {
-        unsigned volatile EN;
-        unsigned volatile DIS;
+        unsigned EN;
+        unsigned DIS;
     } CHG[6], 0x000);
 /* Registers */
-    _REGISTER(unsigned volatile CHEN, 0x500);
-    _REGISTER(unsigned volatile CHENSET, 0x504);
-    _REGISTER(unsigned volatile CHENCLR, 0x508);
+    _REGISTER(unsigned CHEN, 0x500);
+    _REGISTER(unsigned CHENSET, 0x504);
+    _REGISTER(unsigned CHENCLR, 0x508);
     _REGISTER(struct {
-        unsigned volatile * volatile EEP;
-        unsigned volatile * volatile TEP;       
+        unsigned volatile *EEP;
+        unsigned volatile *TEP;       
     } CH[20], 0x510);
-    _REGISTER(unsigned volatile CHGRP[6], 0x800);
+    _REGISTER(unsigned CHGRP[6], 0x800);
 };
 
-#define PPI (* (_DEVSTRUCT _ppi *) 0x4001f000)
+#define PPI (* (volatile _DEVICE _ppi *) 0x4001f000)
 
 
 /* Radio */
-_DEVSTRUCT _radio {
+_DEVICE _radio {
 /* Tasks */
-    _REGISTER(unsigned volatile TXEN, 0x000);
-    _REGISTER(unsigned volatile RXEN, 0x004);
-    _REGISTER(unsigned volatile START, 0x008);
-    _REGISTER(unsigned volatile STOP, 0x00c);
-    _REGISTER(unsigned volatile DISABLE, 0x010);
-    _REGISTER(unsigned volatile RSSISTART, 0x014);
-    _REGISTER(unsigned volatile RSSISTOP, 0x018);
-    _REGISTER(unsigned volatile BCSTART, 0x01c);
-    _REGISTER(unsigned volatile BCSTOP, 0x020);
+    _REGISTER(unsigned TXEN, 0x000);
+    _REGISTER(unsigned RXEN, 0x004);
+    _REGISTER(unsigned START, 0x008);
+    _REGISTER(unsigned STOP, 0x00c);
+    _REGISTER(unsigned DISABLE, 0x010);
+    _REGISTER(unsigned RSSISTART, 0x014);
+    _REGISTER(unsigned RSSISTOP, 0x018);
+    _REGISTER(unsigned BCSTART, 0x01c);
+    _REGISTER(unsigned BCSTOP, 0x020);
 /* Events */
-    _REGISTER(unsigned volatile READY, 0x100);
-    _REGISTER(unsigned volatile ADDRESS, 0x104);
-    _REGISTER(unsigned volatile PAYLOAD, 0x108);
-    _REGISTER(unsigned volatile END, 0x10c);
-    _REGISTER(unsigned volatile DISABLED, 0x110);
-    _REGISTER(unsigned volatile DEVMATCH, 0x114);
-    _REGISTER(unsigned volatile DEVMISS, 0x118);
-    _REGISTER(unsigned volatile RSSIEND, 0x11c);
-    _REGISTER(unsigned volatile BCMATCH, 0x128);
+    _REGISTER(unsigned READY, 0x100);
+    _REGISTER(unsigned ADDRESS, 0x104);
+    _REGISTER(unsigned PAYLOAD, 0x108);
+    _REGISTER(unsigned END, 0x10c);
+    _REGISTER(unsigned DISABLED, 0x110);
+    _REGISTER(unsigned DEVMATCH, 0x114);
+    _REGISTER(unsigned DEVMISS, 0x118);
+    _REGISTER(unsigned RSSIEND, 0x11c);
+    _REGISTER(unsigned BCMATCH, 0x128);
 /* Registers */
-    _REGISTER(unsigned volatile SHORTS, 0x200);
-    _REGISTER(unsigned volatile INTENSET, 0x304);
-    _REGISTER(unsigned volatile INTENCLR, 0x308);
-    _REGISTER(unsigned volatile CRCSTATUS, 0x400);
-    _REGISTER(unsigned volatile RXMATCH, 0x408);
-    _REGISTER(unsigned volatile RXCRC, 0x40c);
-    _REGISTER(unsigned volatile DAI, 0x410);
-    _REGISTER(void * volatile PACKETPTR, 0x504);
-    _REGISTER(unsigned volatile FREQUENCY, 0x508);
-    _REGISTER(unsigned volatile TXPOWER, 0x50c);
-    _REGISTER(unsigned volatile MODE, 0x510);
+    _REGISTER(unsigned SHORTS, 0x200);
+    _REGISTER(unsigned INTENSET, 0x304);
+    _REGISTER(unsigned INTENCLR, 0x308);
+    _REGISTER(unsigned CRCSTATUS, 0x400);
+    _REGISTER(unsigned RXMATCH, 0x408);
+    _REGISTER(unsigned RXCRC, 0x40c);
+    _REGISTER(unsigned DAI, 0x410);
+    _REGISTER(void *PACKETPTR, 0x504);
+    _REGISTER(unsigned FREQUENCY, 0x508);
+    _REGISTER(unsigned TXPOWER, 0x50c);
+    _REGISTER(unsigned MODE, 0x510);
 #define   RADIO_MODE_NRF_1Mbit 0
-    _REGISTER(unsigned volatile PCNF0, 0x514);
+    _REGISTER(unsigned PCNF0, 0x514);
 #define   RADIO_PCNF0_LFLEN 0, 3
 #define   RADIO_PCNF0_S0LEN 8, 1
 #define   RADIO_PCNF0_S1LEN 16, 4
-    _REGISTER(unsigned volatile PCNF1, 0x518);
+    _REGISTER(unsigned PCNF1, 0x518);
 #define   RADIO_PCNF1_MAXLEN 0, 8
 #define   RADIO_PCNF1_STATLEN 8, 8
 #define   RADIO_PCNF1_BALEN 16, 3
@@ -317,26 +315,26 @@ _DEVSTRUCT _radio {
 #define     RADIO_ENDIAN_Little 0
 #define     RADIO_ENDIAN_Big 1
 #define   RADIO_PCNF1_WHITEEN 25
-    _REGISTER(unsigned volatile BASE0, 0x51c);
-    _REGISTER(unsigned volatile BASE1, 0x520);
-    _REGISTER(unsigned volatile PREFIX0, 0x524);
-    _REGISTER(unsigned volatile PREFIX1, 0x528);
-    _REGISTER(unsigned volatile TXADDRESS, 0x52c);
-    _REGISTER(unsigned volatile RXADDRESSES, 0x530);
-    _REGISTER(unsigned volatile CRCCNF, 0x534);
-    _REGISTER(unsigned volatile CRCPOLY, 0x538);
-    _REGISTER(unsigned volatile CRCINIT, 0x53c);
-    _REGISTER(unsigned volatile TEST, 0x540);
-    _REGISTER(unsigned volatile TIFS, 0x544);
-    _REGISTER(unsigned volatile RSSISAMPLE, 0x548);
-    _REGISTER(unsigned volatile STATE, 0x550);
-    _REGISTER(unsigned volatile DATAWHITEIV, 0x554);
-    _REGISTER(unsigned volatile BCC, 0x560);
-    _REGISTER(unsigned volatile DAB[8], 0x600);
-    _REGISTER(unsigned volatile DAP[8], 0x620);
-    _REGISTER(unsigned volatile DACNF, 0x640);
-    _REGISTER(unsigned volatile OVERRIDE[5], 0x724);
-    _REGISTER(unsigned volatile POWER, 0xffc);
+    _REGISTER(unsigned BASE0, 0x51c);
+    _REGISTER(unsigned BASE1, 0x520);
+    _REGISTER(unsigned PREFIX0, 0x524);
+    _REGISTER(unsigned PREFIX1, 0x528);
+    _REGISTER(unsigned TXADDRESS, 0x52c);
+    _REGISTER(unsigned RXADDRESSES, 0x530);
+    _REGISTER(unsigned CRCCNF, 0x534);
+    _REGISTER(unsigned CRCPOLY, 0x538);
+    _REGISTER(unsigned CRCINIT, 0x53c);
+    _REGISTER(unsigned TEST, 0x540);
+    _REGISTER(unsigned TIFS, 0x544);
+    _REGISTER(unsigned RSSISAMPLE, 0x548);
+    _REGISTER(unsigned STATE, 0x550);
+    _REGISTER(unsigned DATAWHITEIV, 0x554);
+    _REGISTER(unsigned BCC, 0x560);
+    _REGISTER(unsigned DAB[8], 0x600);
+    _REGISTER(unsigned DAP[8], 0x620);
+    _REGISTER(unsigned DACNF, 0x640);
+    _REGISTER(unsigned OVERRIDE[5], 0x724);
+    _REGISTER(unsigned POWER, 0xffc);
 };
 
 /* Interrupts */
@@ -344,35 +342,35 @@ _DEVSTRUCT _radio {
 #define RADIO_INT_END 3
 #define RADIO_INT_DISABLED 4
 
-#define RADIO (* (_DEVSTRUCT _radio *) 0x40001000)
+#define RADIO (* (volatile _DEVICE _radio *) 0x40001000)
 
 
 /* TIMERS: Timer 0 is 8/16/24/32 bit, Timers 1 and 2 are 8/16 bit. */
 
-_DEVSTRUCT _timer {
+_DEVICE _timer {
 /* Tasks */
-    _REGISTER(unsigned volatile START, 0x000);
-    _REGISTER(unsigned volatile STOP, 0x004);
-    _REGISTER(unsigned volatile COUNT, 0x008);
-    _REGISTER(unsigned volatile CLEAR, 0x00c);
-    _REGISTER(unsigned volatile SHUTDOWN, 0x010);
-    _REGISTER(unsigned volatile CAPTURE[4], 0x040);
+    _REGISTER(unsigned START, 0x000);
+    _REGISTER(unsigned STOP, 0x004);
+    _REGISTER(unsigned COUNT, 0x008);
+    _REGISTER(unsigned CLEAR, 0x00c);
+    _REGISTER(unsigned SHUTDOWN, 0x010);
+    _REGISTER(unsigned CAPTURE[4], 0x040);
 /* Events */
-    _REGISTER(unsigned volatile COMPARE[4], 0x140);
+    _REGISTER(unsigned COMPARE[4], 0x140);
 /* Registers */
-    _REGISTER(unsigned volatile SHORTS, 0x200);
-    _REGISTER(unsigned volatile INTENSET, 0x304);
-    _REGISTER(unsigned volatile INTENCLR, 0x308);
-    _REGISTER(unsigned volatile MODE, 0x504);
+    _REGISTER(unsigned SHORTS, 0x200);
+    _REGISTER(unsigned INTENSET, 0x304);
+    _REGISTER(unsigned INTENCLR, 0x308);
+    _REGISTER(unsigned MODE, 0x504);
 #define   TIMER_MODE_Timer 0
 #define   TIMER_MODE_Counter 1
-    _REGISTER(unsigned volatile BITMODE, 0x508);
+    _REGISTER(unsigned BITMODE, 0x508);
 #define   TIMER_BITMODE_16Bit 0
 #define   TIMER_BITMODE_8Bit 1
 #define   TIMER_BITMODE_24Bit 2
 #define   TIMER_BITMODE_32Bit 3
-    _REGISTER(unsigned volatile PRESCALER, 0x510);
-    _REGISTER(unsigned volatile CC[4], 0x540);
+    _REGISTER(unsigned PRESCALER, 0x510);
+    _REGISTER(unsigned CC[4], 0x540);
 };
 
 /* Interrupts */
@@ -390,92 +388,92 @@ _DEVSTRUCT _timer {
 #define TIMER_COMPARE2_STOP 10
 #define TIMER_COMPARE3_STOP 11
 
-#define TIMER0 (* (_DEVSTRUCT _timer *) 0x40008000)
-#define TIMER1 (* (_DEVSTRUCT _timer *) 0x40009000)
-#define TIMER2 (* (_DEVSTRUCT _timer *) 0x4000a000)
+#define TIMER0 (* (volatile _DEVICE _timer *) 0x40008000)
+#define TIMER1 (* (volatile _DEVICE _timer *) 0x40009000)
+#define TIMER2 (* (volatile _DEVICE _timer *) 0x4000a000)
 
-extern _DEVSTRUCT _timer * const TIMER[3];
+extern volatile _DEVICE _timer * const TIMER[3];
 
 
 /* Random Number Generator */
-_DEVSTRUCT _rng {
+_DEVICE _rng {
 /* Tasks */
-    _REGISTER(unsigned volatile START, 0x000);
-    _REGISTER(unsigned volatile STOP, 0x004);
+    _REGISTER(unsigned START, 0x000);
+    _REGISTER(unsigned STOP, 0x004);
 /* Events */
-    _REGISTER(unsigned volatile VALRDY, 0x100);
+    _REGISTER(unsigned VALRDY, 0x100);
 /* Registers */
-    _REGISTER(unsigned volatile SHORTS, 0x200);
-    _REGISTER(unsigned volatile INTEN, 0x300);
-    _REGISTER(unsigned volatile INTENSET, 0x304);
-    _REGISTER(unsigned volatile INTENCLR, 0x308);
-    _REGISTER(unsigned volatile CONFIG, 0x504);
+    _REGISTER(unsigned SHORTS, 0x200);
+    _REGISTER(unsigned INTEN, 0x300);
+    _REGISTER(unsigned INTENSET, 0x304);
+    _REGISTER(unsigned INTENCLR, 0x308);
+    _REGISTER(unsigned CONFIG, 0x504);
 #define   RNG_CONFIG_DERCEN 0
-    _REGISTER(unsigned volatile VALUE, 0x508);
+    _REGISTER(unsigned VALUE, 0x508);
 };
 
 /* Interrupts */
 #define RNG_INT_VALRDY 0
 
-#define RNG (* (_DEVSTRUCT _rng *) 0x4000d000)
+#define RNG (* (volatile _DEVICE _rng *) 0x4000d000)
 
 
 /* Temperature sensor */
-_DEVSTRUCT _temp {
+_DEVICE _temp {
 /* Tasks */
-    _REGISTER(unsigned volatile START, 0x000);
-    _REGISTER(unsigned volatile STOP, 0x004);
+    _REGISTER(unsigned START, 0x000);
+    _REGISTER(unsigned STOP, 0x004);
 /* Events */
-    _REGISTER(unsigned volatile DATARDY, 0x100);
+    _REGISTER(unsigned DATARDY, 0x100);
 /* Registers */
-    _REGISTER(unsigned volatile INTEN, 0x300);
-    _REGISTER(unsigned volatile INTENSET, 0x304);
-    _REGISTER(unsigned volatile INTENCLR, 0x308);
-    _REGISTER(unsigned volatile VALUE, 0x508);
+    _REGISTER(unsigned INTEN, 0x300);
+    _REGISTER(unsigned INTENSET, 0x304);
+    _REGISTER(unsigned INTENCLR, 0x308);
+    _REGISTER(unsigned VALUE, 0x508);
 };
 
 /* Interrupts */
 #define TEMP_INT_DATARDY 0
 
-#define TEMP (* (_DEVSTRUCT _temp *) 0x4000c000)
+#define TEMP (* (volatile _DEVICE _temp *) 0x4000c000)
 
 
 /* I2C */
-_DEVSTRUCT _i2c {
+_DEVICE _i2c {
 /* Tasks */
-    _REGISTER(unsigned volatile STARTRX, 0x000);
-    _REGISTER(unsigned volatile STARTTX, 0x008);
-    _REGISTER(unsigned volatile STOP, 0x014);
-    _REGISTER(unsigned volatile SUSPEND, 0x01c);
-    _REGISTER(unsigned volatile RESUME, 0x020);
+    _REGISTER(unsigned STARTRX, 0x000);
+    _REGISTER(unsigned STARTTX, 0x008);
+    _REGISTER(unsigned STOP, 0x014);
+    _REGISTER(unsigned SUSPEND, 0x01c);
+    _REGISTER(unsigned RESUME, 0x020);
 /* Events */
-    _REGISTER(unsigned volatile STOPPED, 0x104);
-    _REGISTER(unsigned volatile RXDREADY, 0x108);
-    _REGISTER(unsigned volatile TXDSENT, 0x11c);
-    _REGISTER(unsigned volatile ERROR, 0x124);
-    _REGISTER(unsigned volatile BB, 0x138);
-    _REGISTER(unsigned volatile SUSPENDED, 0x148);
+    _REGISTER(unsigned STOPPED, 0x104);
+    _REGISTER(unsigned RXDREADY, 0x108);
+    _REGISTER(unsigned TXDSENT, 0x11c);
+    _REGISTER(unsigned ERROR, 0x124);
+    _REGISTER(unsigned BB, 0x138);
+    _REGISTER(unsigned SUSPENDED, 0x148);
 /* Registers */
-    _REGISTER(unsigned volatile SHORTS, 0x200);
-    _REGISTER(unsigned volatile INTEN, 0x300);
-    _REGISTER(unsigned volatile INTENSET, 0x304);
-    _REGISTER(unsigned volatile INTENCLR, 0x308);
-    _REGISTER(unsigned volatile ERRORSRC, 0x4c4);
+    _REGISTER(unsigned SHORTS, 0x200);
+    _REGISTER(unsigned INTEN, 0x300);
+    _REGISTER(unsigned INTENSET, 0x304);
+    _REGISTER(unsigned INTENCLR, 0x308);
+    _REGISTER(unsigned ERRORSRC, 0x4c4);
 #define   I2C_ERRORSRC_OVERRUN 0
 #define   I2C_ERRORSRC_ANACK 1
 #define   I2C_ERRORSRC_DNACK 2
 #define   I2C_ERRORSRC_All 0x7
-    _REGISTER(unsigned volatile ENABLE, 0x500) ;
+    _REGISTER(unsigned ENABLE, 0x500) ;
 #define   I2C_ENABLE_Disabled 0
 #define   I2C_ENABLE_Enabled 5
-    _REGISTER(unsigned volatile PSELSCL, 0x508);
-    _REGISTER(unsigned volatile PSELSDA, 0x50c);
-    _REGISTER(unsigned volatile RXD, 0x518);
-    _REGISTER(unsigned volatile TXD, 0x51c) ;
-    _REGISTER(unsigned volatile FREQUENCY, 0x524);
+    _REGISTER(unsigned PSELSCL, 0x508);
+    _REGISTER(unsigned PSELSDA, 0x50c);
+    _REGISTER(unsigned RXD, 0x518);
+    _REGISTER(unsigned TXD, 0x51c) ;
+    _REGISTER(unsigned FREQUENCY, 0x524);
 #define   I2C_FREQUENCY_100kHz 0x01980000
-    _REGISTER(unsigned volatile ADDRESS, 0x588);
-    _REGISTER(unsigned volatile POWER, 0xffc);
+    _REGISTER(unsigned ADDRESS, 0x588);
+    _REGISTER(unsigned POWER, 0xffc);
 };
     
 /* Interrupts */
@@ -491,30 +489,30 @@ _DEVSTRUCT _i2c {
 /* Microbian's I2C driver is written to support multiple instances, so
 let's make an array, even though the V1 has only one I2C interface. */
 
-#define I2C0 (* (_DEVSTRUCT _i2c *) 0x40003000)
+#define I2C0 (* (volatile _DEVICE _i2c *) 0x40003000)
 
-extern _DEVSTRUCT _i2c * const I2C[1];
+extern volatile _DEVICE _i2c * const I2C[1];
 
 
 /* UART */
-_DEVSTRUCT _uart {
+_DEVICE _uart {
 /* Tasks */
-    _REGISTER(unsigned volatile STARTRX, 0x000);
-    _REGISTER(unsigned volatile STARTTX, 0x008);
+    _REGISTER(unsigned STARTRX, 0x000);
+    _REGISTER(unsigned STARTTX, 0x008);
 /* Events */
-    _REGISTER(unsigned volatile RXDRDY, 0x108);
-    _REGISTER(unsigned volatile TXDRDY, 0x11c);
+    _REGISTER(unsigned RXDRDY, 0x108);
+    _REGISTER(unsigned TXDRDY, 0x11c);
 /* Registers */
-    _REGISTER(unsigned volatile INTENSET, 0x304);
-    _REGISTER(unsigned volatile INTENCLR, 0x308);
-    _REGISTER(unsigned volatile ENABLE, 0x500);
+    _REGISTER(unsigned INTENSET, 0x304);
+    _REGISTER(unsigned INTENCLR, 0x308);
+    _REGISTER(unsigned ENABLE, 0x500);
 #define   UART_ENABLE_Disabled 0
 #define   UART_ENABLE_Enabled 4
-    _REGISTER(unsigned volatile PSELTXD, 0x50c);
-    _REGISTER(unsigned volatile PSELRXD, 0x514);
-    _REGISTER(unsigned volatile RXD, 0x518);
-    _REGISTER(unsigned volatile TXD, 0x51c);
-    _REGISTER(unsigned volatile BAUDRATE, 0x524);
+    _REGISTER(unsigned PSELTXD, 0x50c);
+    _REGISTER(unsigned PSELRXD, 0x514);
+    _REGISTER(unsigned RXD, 0x518);
+    _REGISTER(unsigned TXD, 0x51c);
+    _REGISTER(unsigned BAUDRATE, 0x524);
 #define   UART_BAUDRATE_1200   0x0004f000
 #define   UART_BAUDRATE_2400   0x0009d000
 #define   UART_BAUDRATE_4800   0x0013b000
@@ -533,7 +531,7 @@ _DEVSTRUCT _uart {
 #define   UART_BAUDRATE_460800 0x07400000
 #define   UART_BAUDRATE_921600 0x0f000000
 #define   UART_BAUDRATE_1M     0x10000000
-    _REGISTER(unsigned volatile CONFIG, 0x56c);
+    _REGISTER(unsigned CONFIG, 0x56c);
 #define   UART_CONFIG_HWFC 0
 #define   UART_CONFIG_PARITY 1, 3
 #define     UART_PARITY_None 0
@@ -544,23 +542,23 @@ _DEVSTRUCT _uart {
 #define   UART_INT_RXDRDY 2
 #define   UART_INT_TXDRDY 7
 
-#define UART (* (_DEVSTRUCT _uart *) 0x40002000)
+#define UART (* (volatile _DEVICE _uart *) 0x40002000)
 
 
 /* ADC */
-_DEVSTRUCT _adc {
+_DEVICE _adc {
 /* Tasks */
-    _REGISTER(unsigned volatile START, 0x000);
-    _REGISTER(unsigned volatile STOP, 0x004);
+    _REGISTER(unsigned START, 0x000);
+    _REGISTER(unsigned STOP, 0x004);
 /* Events */
-    _REGISTER(unsigned volatile END, 0x100);
+    _REGISTER(unsigned END, 0x100);
 /* Registers */
-    _REGISTER(unsigned volatile INTEN, 0x300);
-    _REGISTER(unsigned volatile INTENSET, 0x304);
-    _REGISTER(unsigned volatile INTENCLR, 0x308);
-    _REGISTER(unsigned volatile BUSY, 0x400);
-    _REGISTER(unsigned volatile ENABLE, 0x500);
-    _REGISTER(unsigned volatile CONFIG, 0x504);
+    _REGISTER(unsigned INTEN, 0x300);
+    _REGISTER(unsigned INTENSET, 0x304);
+    _REGISTER(unsigned INTENCLR, 0x308);
+    _REGISTER(unsigned BUSY, 0x400);
+    _REGISTER(unsigned ENABLE, 0x500);
+    _REGISTER(unsigned CONFIG, 0x504);
 #define   ADC_CONFIG_RES 0, 2
 #define     ADC_RES_8Bit 0
 #define     ADC_RES_9bit 1
@@ -580,13 +578,13 @@ _DEVSTRUCT _adc {
 #define   ADC_CONFIG_EXTREFSEL 16, 2
 #define     ADC_EXTREFSEL_Ref0 1
 #define     ADC_EXTREFSEL_Ref1 2
-    _REGISTER(unsigned volatile RESULT, 0x508);
+    _REGISTER(unsigned RESULT, 0x508);
 };
 
 /* Interrupts */
 #define ADC_INT_END 0
 
-#define ADC (* (_DEVSTRUCT _adc *) 0x40007000)
+#define ADC (* (volatile _DEVICE _adc *) 0x40007000)
 
     
 /* NVIC stuff */

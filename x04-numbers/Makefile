@@ -1,4 +1,4 @@
-# x03/Makefile
+# x04/Makefile
 # Copyright (c) 2020-21 J. M. Spivey
 
 all: max.hex

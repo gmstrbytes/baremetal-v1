@@ -1,4 +1,4 @@
-# x04/Makefile
+# x03/Makefile
 # Copyright (c) 2020-21 J. M. Spivey
 
 all: mult.hex

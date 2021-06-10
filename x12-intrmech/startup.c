@@ -100,11 +100,11 @@ void irq_priority(int irq, unsigned prio)
 clear_pending, reschedule */
 
 /* Device register arrays */
-_DEVSTRUCT _i2c * const I2C[1] = {
+volatile _DEVICE _i2c * const I2C[1] = {
     &I2C0
 };
 
-_DEVSTRUCT _timer * const TIMER[3] = {
+volatile _DEVICE _timer * const TIMER[3] = {
     &TIMER0, &TIMER1, &TIMER2
 };
 
