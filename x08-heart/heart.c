@@ -27,7 +27,7 @@ const unsigned small[] = {
 #define JIFFY 5000              /* Delay in microsecs */
 
 /* show -- display three rows of a picture n times */
-void show(const unsigned *img, int n)
+void show(const unsigned img[], int n)
 {
     while (n-- > 0) {
         /* Takes 15msec per iteration */
@@ -44,6 +44,7 @@ int pressed(int button)
     return (GPIO.IN & BIT(button)) == 0;
 }
 
+/* init -- main program */
 void init(void)
 {
     GPIO.DIR = 0xfff0;

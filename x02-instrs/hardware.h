@@ -72,7 +72,7 @@ argument to be a macro that expands the a 'position, width' pair. */
 /* Only one I2C interface */
 #define I2C_INTERNAL 0
 #define I2C_EXTERNAL 0
-#define N_I2CS 1
+#define N_I2C 1
 
 
 /* Interrupts */
